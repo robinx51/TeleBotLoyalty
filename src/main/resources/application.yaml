@@ -1,0 +1,13 @@
+server:
+  port: 9093
+
+spring:
+  profiles:
+    active: dev
+
+logging:
+  level:
+    ru.telebot: DEBUG
+  file:
+    name: ./logs/app.log
+    path: logs
