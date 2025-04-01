@@ -3,7 +3,9 @@ package ru.telebot.bot.enums;
 import java.util.Optional;
 
 public enum CallbackData {
-    START_SUBSCRIBED("subscribed");
+    START_SUBSCRIBED("subscribed"),
+    USED_IPHONE("used_phone"),
+    NEW_IPHONE("new_phone");
 
     private final String value;
 

@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static ru.telebot.bot.enums.CallbackData.*;
+import static ru.telebot.bot.enums.ScriptMessage.*;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -58,9 +61,39 @@ public class UpdateService {
     }
 
     private void handleText(Update update) {
-        SendMessage message = new SendMessage();
-        message.setText(update.getMessage().getText());
-        message.setChatId(update.getMessage().getChatId());
+        String text = update.getMessage().getText();
+        SendMessage message = SendMessage.builder()
+                .chatId(update.getMessage().getChatId())
+                .text(" ")
+                .build();
+        switch (text) {
+            case "Кэшбек": {
+                message.setText("Здесь будет начисляться кэшбэк после покупки");
+
+                break;
+            } case "Списать баллы": {
+                message.setText("Здесь будет запрос на списание баллов");
+
+                break;
+            } case "Узнать наличие": {
+                List<InlineKeyboardButton> buttons = new ArrayList<>();
+                buttons.add(getInlineKeyboardButton("Новые айфоны", String.valueOf(NEW_IPHONE)));
+                buttons.add(getInlineKeyboardButton("Б/У айфоны", String.valueOf(USED_IPHONE)));
+                InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
+                        .keyboard(List.of(buttons))
+                        .build();
+                message.setText("Выберите тип товара:ㅤㅤㅤㅤ");
+                message.setReplyMarkup(inlineKeyboardMarkup);
+                break;
+            } case "Правила кэшбека": {
+                message.setText("Здесь будут правила кэшбека");
+
+                break;
+            } default: {
+                message.setText("Неизвестная команда, попробуйте ещё раз");
+                break;
+            }
+        }
         bot.sendMessage(message);
     }
 
@@ -71,15 +104,17 @@ public class UpdateService {
                     handleUnsubscribe(message);
                     return;
                 }
-                //telegramBot.forceSubscribeUser(update.getMessage().getChatId());
-                //addUser(update.getMessage().getChatId());
-
                 sendMessage(getStartMessage(message.getChatId()));
-
                 break;
-            }
-            case "/help": {
+            } case "/help": {
 
+            } default: {
+                SendMessage sendMessage = SendMessage.builder()
+                        .chatId(message.getChatId())
+                        .text(String.valueOf(UNKNOWN_COMMAND))
+                        .build();
+                bot.sendMessage(sendMessage);
+                break;
             }
         }
 
@@ -93,36 +128,50 @@ public class UpdateService {
             log.error("Пустой CallbackData");
             return;
         }
+        EditMessageText editMessage = EditMessageText.builder()
+                .chatId(chatId)
+                .messageId(callbackQuery.getMessage().getMessageId())
+                .text("")
+                .build();
+        SendMessage newMessage = null;
         switch (callbackData.get()) {
-            case CallbackData.START_SUBSCRIBED:
-                EditMessageText editMessage = EditMessageText.builder()
-                        .chatId(chatId)
-                        .messageId(callbackQuery.getMessage().getMessageId())
-                        .text("")
-                        .build();
-                SendMessage newMessage = null;
+            case CallbackData.START_SUBSCRIBED: {
+
                 if (isUserSubscribed(callbackQuery.getFrom().getId())) {
-                    editMessage.setText(String.valueOf(ScriptMessage.MESSAGE_AFTER_SUBSCRIBE));
+                    editMessage.setText(String.valueOf(AFTER_SUBSCRIBE));
                     newMessage = SendMessage.builder()
                             .chatId(chatId)
                             .replyMarkup(setUpKeyboardMarkup())
-                            .text(String.valueOf(ScriptMessage.SUBSCRIBED_START))
+                            .text(String.valueOf(SUBSCRIBED_START))
                             .build();
                 } else {
-                    editMessage.setText(String.valueOf(ScriptMessage.REPEATED_UNSUBSCRIBED_MESSAGE));
+                    editMessage.setText(String.valueOf(REPEATED_UNSUBSCRIBED));
                     editMessage.setReplyMarkup(getSubscribeMarkup());
                 }
-                bot.sendEditedMessage(editMessage);
-                bot.sendMessage(newMessage);
-                bot.sendCallbackAnswer(callbackQuery.getId());
                 break;
+            } case NEW_IPHONE: {
+                InlineKeyboardMarkup keyboardMarkup = InlineKeyboardMarkup.builder()
+                        .build();
+                newMessage = SendMessage.builder()
+                        .chatId(chatId)
+                        .replyMarkup(keyboardMarkup)
+                        .build();
+
+                break;
+            } case USED_IPHONE: {
+
+                break;
+            }
         }
+        bot.sendEditedMessage(editMessage);
+        bot.sendMessage(newMessage);
+        bot.sendCallbackAnswer(callbackQuery.getId());
     }
 
     private SendMessage getStartMessage(Long chatId) {
         return SendMessage.builder()
                 .chatId(chatId)
-                .text(String.valueOf(ScriptMessage.SUBSCRIBED_START))
+                .text(String.valueOf(SUBSCRIBED_START))
                 .replyMarkup(setUpKeyboardMarkup())
                 .build();
     }
@@ -130,7 +179,7 @@ public class UpdateService {
     private void handleUnsubscribe(Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(message.getChatId().toString());
-        sendMessage.setText(String.valueOf(ScriptMessage.UNSUBSCRIBED_START));
+        sendMessage.setText(String.valueOf(UNSUBSCRIBED_START));
         sendMessage.setReplyMarkup(getSubscribeMarkup());
 
         sendMessage(sendMessage);

@@ -9,6 +9,8 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetMe;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.description.SetMyDescription;
+import org.telegram.telegrambots.meta.api.methods.description.SetMyShortDescription;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -20,6 +22,9 @@ import ru.telebot.bot.service.UpdateService;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static ru.telebot.bot.enums.ScriptMessage.BOT_DESCRIPTION;
+import static ru.telebot.bot.enums.ScriptMessage.BOT_SHORT_DESCRIPTION;
 
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
@@ -46,8 +51,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         SetMyCommands setMyCommands = SetMyCommands.builder()
                 .commands(List.of(new BotCommand("start", "Начало взаимодействия с ботом")))
                 .build();
+        SetMyDescription setMyDescription = SetMyDescription.builder()
+                .description(String.valueOf(BOT_DESCRIPTION))
+                .build();
+        SetMyShortDescription setMyShortDescription = SetMyShortDescription.builder()
+                .shortDescription(String.valueOf(BOT_SHORT_DESCRIPTION))
+                .build();
         try {
             execute(setMyCommands);
+            execute(setMyDescription);
+            execute(setMyShortDescription);
         } catch (TelegramApiException e) {
             logger.error(e.getMessage());
         }

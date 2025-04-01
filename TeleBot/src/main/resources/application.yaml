@@ -9,5 +9,5 @@ logging:
   level:
     ru.telebot: DEBUG
   file:
-    name: ./logs/app.log
+    name: ./TeleBot/logs/app.log
     path: logs

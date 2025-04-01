@@ -1,0 +1,21 @@
+server:
+  port: 9092
+bot:
+  port: 9093
+
+spring:
+  profiles:
+    active: dev
+  liquibase:
+    change-log: db/changelog/changelog.xml
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+
+
+logging:
+  level:
+    ru.telebot: DEBUG
+  file:
+    name: ./DataStorage/logs/app.log
+    path: logs
