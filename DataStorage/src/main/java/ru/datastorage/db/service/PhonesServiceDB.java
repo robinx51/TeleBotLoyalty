@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import ru.datastorage.db.entity.Phone;
 import ru.datastorage.db.repository.PhonesRepository;
 
+import java.util.List;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -33,5 +35,9 @@ public class PhonesServiceDB {
     public Phone getPhoneById(String phoneModel) {
         return phonesRepository.findById(phoneModel)
                 .orElseThrow(() -> new EntityNotFoundException("Phone модели: " + phoneModel + " не найден"));
+    }
+
+    public List<Phone> getAll() {
+        return phonesRepository.findAll();
     }
 }

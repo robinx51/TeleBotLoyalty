@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import ru.datastorage.db.entity.Phone;
 import ru.datastorage.db.service.PhonesServiceDB;
 
+import java.util.List;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -14,5 +16,9 @@ public class DataStorageService {
 
     public void addNewPhone(Phone phone) {
         phonesServiceDB.addPhone(phone);
+    }
+
+    public List<Phone> getAllPhones() {
+        return phonesServiceDB.getAll();
     }
 }

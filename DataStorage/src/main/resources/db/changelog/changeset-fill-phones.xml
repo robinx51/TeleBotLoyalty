@@ -1,0 +1,38 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="fill_table_phones" author="robinx51">
+        <insert tableName="phones">
+            <column name="model">12</column>
+            <column name="release_year">2020</column>
+            <column name="type">["Common","mini","Pro","Pro Max"]</column>
+            <column name="memory">[64,128,256]</column>
+        </insert>
+        <insert tableName="phones">
+            <column name="model">13</column>
+            <column name="release_year">2021</column>
+            <column name="type">["Common","mini","Pro","Pro Max"]</column>
+            <column name="memory">[128,256,512]</column>
+        </insert>
+        <insert tableName="phones">
+            <column name="model">14</column>
+            <column name="release_year">2022</column>
+            <column name="type">["Common","Plus","Pro","Pro Max"]</column>
+            <column name="memory">[128,256,512]</column>
+        </insert>
+        <insert tableName="phones">
+            <column name="model">15</column>
+            <column name="release_year">2023</column>
+            <column name="type">["Common","Plus","Pro","Pro Max"]</column>
+            <column name="memory">[128,256,512]</column>
+        </insert>
+        <insert tableName="phones">
+            <column name="model">16</column>
+            <column name="release_year">2024</column>
+            <column name="type">["Common","Plus","Pro","Pro Max"]</column>
+            <column name="memory">[128,256,512]</column>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

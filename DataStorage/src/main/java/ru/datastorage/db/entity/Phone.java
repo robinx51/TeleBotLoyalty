@@ -36,9 +36,4 @@ public class Phone {
     @Column(name = "memory")
     @JdbcTypeCode(SqlTypes.JSON)
     private List<Integer> memory;
-
-    @NotNull
-    @Column(name = "color")
-    @JdbcTypeCode(SqlTypes.JSON)
-    private List<String> color;
 }

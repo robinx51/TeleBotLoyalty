@@ -1,5 +1,7 @@
 server:
   port: 9093
+dataStorage:
+  url: http://localhost:9092
 
 spring:
   profiles:

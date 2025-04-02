@@ -14,8 +14,6 @@
             <column name="type" type="jsonb"/>
 
             <column name="memory" type="jsonb"/>
-
-            <column name="color" type="jsonb"/>
         </createTable>
     </changeSet>
 </databaseChangeLog>

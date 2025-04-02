@@ -4,8 +4,11 @@ import java.util.Optional;
 
 public enum CallbackData {
     START_SUBSCRIBED("subscribed"),
-    USED_IPHONE("used_phone"),
-    NEW_IPHONE("new_phone");
+    PHONES_PAGE("phones"),
+    USED_PAGE("used"),
+    NEW_PAGE("new"),
+    PAGE("page_"),
+    ACTION("action_");
 
     private final String value;
 
@@ -18,9 +21,9 @@ public enum CallbackData {
         return value;
     }
 
-    public static Optional<CallbackData> fromValue(String v) {
+    public static Optional<CallbackData> fromValue(String value) {
         for (CallbackData command : CallbackData.values()) {
-            if (v.equals(command.value)) {
+            if (value.equals(command.value)) {
                 return Optional.of(command);
             }
         }
