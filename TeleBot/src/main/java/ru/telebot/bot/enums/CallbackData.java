@@ -8,8 +8,14 @@ public enum CallbackData {
     USED_PAGE("used"),
     NEW_PAGE("new"),
     PAGE("page_"),
-    ACTION("action_");
-
+    ACTION("action_"),
+    COMMON_MODEL("common"),
+    PRO_TYPE("Pro"),
+    PRO_MAX_TYPE("Pro Max"),
+    MINI_TYPE("mini"),
+    PLUS_TYPE("Plus"),
+    E_TYPE("e");
+//page_phones_used_15_pro_256
     private final String value;
 
     CallbackData(String value) {

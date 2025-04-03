@@ -19,9 +19,9 @@ public class PhoneDto {
     @Schema(name = "releaseYear", example = "2025")
     private Integer releaseYear;
     @NotNull
-    @Schema(name = "type", example = "[\"Common\",\"Pro Max\"]")
+    @Schema(name = "type", example = "[\"\",\"Pro Max\"]")
     private List<String> type;
     @NotNull
     @Schema(name = "memory", example = "[\"128\",\"256\",\"512\"]")
-    private List<Integer> memory;
+    private List<String> memory;
 }

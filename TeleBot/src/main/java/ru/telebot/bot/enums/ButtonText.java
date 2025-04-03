@@ -18,4 +18,8 @@ public enum ButtonText {
     public String toString() {
         return value;
     }
+
+    public String getType(String model, String type) {
+        return PHONE_BUTTON.value + model + type;
+    }
 }

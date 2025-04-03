@@ -9,7 +9,10 @@ public enum ScriptMessage {
     REPEATED_UNSUBSCRIBED("Подписка не найдена. Попробуйте ещё раз"),
     UNKNOWN_COMMAND("Извините, я не понимаю эту команду\nДоступные команды представлены в меню слева от поля ввода сообщения"),
     PHONES_TEXT("Выберите тип товара:ㅤㅤㅤㅤ"),
-    MODEL_TEXT("Выберите поколение:ㅤㅤㅤㅤㅤ");
+    MODEL_TEXT("Выберите поколение:ㅤㅤㅤㅤㅤ"),
+    TYPE_TEXT("\nВыберите тип:ㅤㅤㅤㅤㅤ"),
+    MEMORY_TEXT("Укажите количество памяти:"),
+    CHOICE_TEXT("iPhone ");
     private final String value;
 
     ScriptMessage(String value) {
