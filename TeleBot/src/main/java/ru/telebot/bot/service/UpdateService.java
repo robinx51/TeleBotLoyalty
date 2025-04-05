@@ -64,9 +64,6 @@ public class UpdateService {
             log.debug("Получен callback: {}", update.getCallbackQuery().getData());
             handleCallbackQuery(update.getCallbackQuery());
         }
-        else if (update.getMessage().hasContact()) {
-            log.debug("Получен контакт");
-        }
         else
             log.warn("Необработанный запрос: {}", update);
     }
@@ -181,7 +178,6 @@ public class UpdateService {
         bot.sendMessage(newMessage);
         bot.sendCallbackAnswer(callbackQuery.getId());
     }
-
     private EditMessageText handleInteger(String[] pages, CallbackQuery callbackQuery) {
         EditMessageText message = new EditMessageText();
         String model = pages[3];
@@ -216,13 +212,6 @@ public class UpdateService {
         return message;
     }
 
-    private PhoneDto getPhoneByModel(String model) {
-        return phones.stream()
-                .filter(phoneDto -> model.equals(phoneDto.getModel()))
-                .findAny()
-                .orElse(null);
-    }
-
     // Keyboards
     private InlineKeyboardMarkup getSubscribeKeyboard() {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -242,10 +231,6 @@ public class UpdateService {
         ReplyKeyboardMarkup replyKeyboardMarkup = ReplyKeyboardMarkup.builder()
                 .resizeKeyboard(true)
                 .build();
-//        KeyboardButton keyboardButton = KeyboardButton.builder()
-//                .requestContact(true)
-//                .text("Поделиться контактом")
-//                .build();
         List<KeyboardRow> rows = new ArrayList<>();
         rows.add(setKeyboardRow("Кэшбек", "Списать баллы"));
         rows.add(setKeyboardRow("Узнать наличие", "Правила кэшбека"));
@@ -257,16 +242,6 @@ public class UpdateService {
         List<String> models = phones.stream()
                 .map(PhoneDto::getModel)
                 .toList();
-        //int phonesSize = phones.size();
-//        int k = 0;
-//        for (int i = phonesSize / 2; k < phonesSize; i++) {
-//            List<InlineKeyboardButton> row = new ArrayList<>();
-//            for (int j = i % 2; j < 2; j++, k++){
-//                PhoneDto phone = phones.get(k);
-//                row.add(getInlineKeyboardButton(PHONE_BUTTON + phone.getModel(), pageHistory, phone.getModel()));
-//            }
-//            keyboard.add(row);
-//        }
         return getGridKeyboard(PHONE_BUTTON.toString(), models, pageHistory);
     }
     private InlineKeyboardMarkup getModelsKeyboard(String generation, String callbackData) {
@@ -428,5 +403,11 @@ public class UpdateService {
         } catch(NumberFormatException e){
             return false;
         }
+    }
+    private PhoneDto getPhoneByModel(String model) {
+        return phones.stream()
+                .filter(phoneDto -> model.equals(phoneDto.getModel()))
+                .findAny()
+                .orElse(null);
     }
 }
