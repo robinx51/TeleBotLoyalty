@@ -9,10 +9,7 @@ import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Chat;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -56,7 +53,7 @@ public class UpdateService {
                 handleCommand(update.getMessage());
             }
             else {
-                log.debug("Получен текст");
+                log.debug("Получен текст: {}", update.getMessage().getText());
                 handleText(update);
             }
         }
@@ -409,5 +406,24 @@ public class UpdateService {
                 .filter(phoneDto -> model.equals(phoneDto.getModel()))
                 .findAny()
                 .orElse(null);
+    }
+    private SendMessage getMessageWithLink(Long chatId, String text, String url, int startIndex, int length) {
+        List<MessageEntity> entities = new ArrayList<>();
+        LinkPreviewOptions options = new LinkPreviewOptions();
+
+        entities.add(MessageEntity.builder()
+                .type("text_link")
+                .offset(startIndex)
+                .length(length)
+                .url(url)
+                .build());
+        options.setUrlField(url);
+
+        return SendMessage.builder()
+                .chatId(chatId)
+                .text(text)
+                .entities(entities)
+                .linkPreviewOptions(options)
+                .build();
     }
 }

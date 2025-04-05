@@ -11,5 +11,5 @@ logging:
   level:
     ru.telebot: DEBUG
   file:
-    name: ./TeleBot/logs/app.log
+    name: ./backend/TeleBot/logs/app.log
     path: logs

@@ -1,7 +1,5 @@
 server:
   port: 9092
-bot:
-  port: 9093
 
 spring:
   profiles:
@@ -17,5 +15,5 @@ logging:
   level:
     ru.telebot: DEBUG
   file:
-    name: ./DataStorage/logs/app.log
+    name: ./backend/DataStorage/logs/app.log
     path: logs

@@ -1,0 +1,4 @@
+bot:
+  name: ${TG_BOT_NAME:iMarket58_bot}
+  token: ${TG_BOT_TOKEN:7688828133:AAH_Fsco-cNHkoT5xwisiIm4DB7rXBGG0bI}
+  channelName: Robinx51Channel
