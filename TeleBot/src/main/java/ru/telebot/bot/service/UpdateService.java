@@ -232,7 +232,7 @@ public class UpdateService {
                 .resizeKeyboard(true)
                 .build();
         List<KeyboardRow> rows = new ArrayList<>();
-        rows.add(setKeyboardRow("Кэшбек", "Списать баллы"));
+        rows.add(setKeyboardRow("Накопить кэшбек", "Списать баллы"));
         rows.add(setKeyboardRow("Узнать наличие", "Правила кэшбека"));
 
         replyKeyboardMarkup.setKeyboard(rows);
