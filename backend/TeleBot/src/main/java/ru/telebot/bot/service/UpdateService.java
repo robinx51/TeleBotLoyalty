@@ -17,29 +17,53 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.telebot.bot.TelegramBot;
-import ru.telebot.bot.enums.CallbackData;
+import ru.telebot.dto.UpdateUserDto;
+import ru.telebot.enums.ButtonText;
+import ru.telebot.enums.CallbackData;
 import ru.telebot.dto.PhoneDto;
+import ru.telebot.dto.UserDto;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.telebot.bot.enums.ButtonText.*;
-import static ru.telebot.bot.enums.CallbackData.*;
-import static ru.telebot.bot.enums.ScriptMessage.*;
+import static ru.telebot.enums.ButtonText.*;
+import static ru.telebot.enums.CallbackData.*;
+import static ru.telebot.enums.ScriptMessage.*;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UpdateService {
+    /// TODO обработка после выбора типа
     private TelegramBot bot;
     private final DataStorageService dataStorageService;
     @Value("@${bot.channelName}")
     private String channelName;
     private List<PhoneDto> phones;
+    private Map<Long, UserDto> users;
+    private Map<Integer, Long> usersIdByCode;
 
     public void registerBot(TelegramBot bot) {
         this.bot = bot;
-        initPhones();
+        initLists();
+    }
+    public List<UserDto> getUsers() {
+        log.debug("Запрос списка пользователей");
+        return users.values().stream().toList();
+    }
+    public UserDto getUserByCode(Integer code) {
+        log.debug("Запрос пользователя с кодом: {}", code);
+        return users.get(usersIdByCode.get(code));
+    }
+    public void updateUser(UpdateUserDto update) {
+        log.debug("Обновление данных пользователя с кодом: {}", update.getCode());
+        UserDto user = users.get(update.getTelegramId());
+        user.setName(update.getName());
+        user.setPhoneNumber(update.getPhoneNumber());
+        user.setCashback(calculateCashback(user.getCashback(), update));
+        dataStorageService.updateUser(user);
     }
 
     // Handlers
@@ -65,42 +89,54 @@ public class UpdateService {
             log.warn("Необработанный запрос: {}", update);
     }
     private void handleText(Update update) {
-        String text = update.getMessage().getText();
         SendMessage message = SendMessage.builder()
                 .chatId(update.getMessage().getChatId())
                 .text(" ")
                 .build();
-        switch (text) {
-            case "Кэшбек" -> message.setText("Здесь будет начисляться кэшбэк после покупки");
-            case "Списать баллы" -> message.setText("Здесь будет запрос на списание баллов");
-            case "Узнать наличие" -> {
-                EditMessageText availabilityPage = getAvailabilityPage();
-                message.setText(availabilityPage.getText());
-                message.setReplyMarkup(availabilityPage.getReplyMarkup());
+        Optional<ButtonText> text = ButtonText.fromValue(update.getMessage().getText());
+        if (text.isPresent()){
+            switch (text.get()) {
+                case ADD_CASHBACK -> {
+                    Integer code = getCodeById(update.getMessage().getFrom().getId(), update.getMessage().getFrom());
+                    message.setText(ADD_CASHBACK_RESPONSE.toString() + code);
+                }
+                case SUB_CASHBACK -> {
+                    Integer code = getCodeById(update.getMessage().getFrom().getId(), update.getMessage().getFrom());
+                    message.setText(SUB_CASHBACK_RESPONSE.toString() + code);
+                }
+                case AVAILABILITY -> {
+                    EditMessageText availabilityPage = getAvailabilityPage();
+                    message.setText(availabilityPage.getText());
+                    message.setReplyMarkup(availabilityPage.getReplyMarkup());
+                }
+                case CASHBACK_RULES -> message.setText("Здесь будут правила кэшбека");
+                default -> {
+                    log.warn("Необработанный текст: {}", text.get());
+                    message.setText("Неизвестная команда, попробуйте ещё раз");
+                }
             }
-            case "Правила кэшбека" -> message.setText("Здесь будут правила кэшбека");
-            default -> message.setText("Неизвестная команда, попробуйте ещё раз");
-        }
+        } else
+            message.setText(UNKNOWN_COMMAND.toString());
         bot.sendMessage(message);
     }
     private void handleCommand(Message message) {
         switch (message.getText()) {
-            case "/start": {
-                if (!isUserSubscribed(message.getFrom().getId())) {
+            case "/start" -> {
+                User user = message.getFrom();
+                if (!isUserSubscribed(user.getId())) {
                     handleUnsubscribe(message);
-                    return;
+                } else {
+                    bot.sendMessage(getStartPage(message.getChatId()));
+                    newUser(user);
                 }
-                bot.sendMessage(getStartPage(message.getChatId()));
-                break;
-            } case "/help": {
+            } case "/help" -> {
 
-            } default: {
+            } default -> {
                 SendMessage sendMessage = SendMessage.builder()
                         .chatId(message.getChatId())
                         .text(String.valueOf(UNKNOWN_COMMAND))
                         .build();
                 bot.sendMessage(sendMessage);
-                break;
             }
         }
 
@@ -127,6 +163,8 @@ public class UpdateService {
         SendMessage newMessage = null;
 
         String[] pages = callbackQuery.getData().split("_");
+
+
         Optional<CallbackData> lastPage = CallbackData.fromValue(pages[pages.length-1]);
         if (lastPage.isEmpty()) {
             if (isNumeric((pages[pages.length-1]))) {
@@ -168,7 +206,6 @@ public class UpdateService {
                     return;
                 }
             }
-
         }
 
         bot.sendEditedMessage(editMessage);
@@ -216,7 +253,6 @@ public class UpdateService {
         InlineKeyboardButton buttonLink = InlineKeyboardButton.builder()
                 .url(getInviteLink())
                 .text(CHANNEL_LINK.toString())
-                //.callbackData("subscribeLink")
                 .build();
         row.add(buttonLink);
         row.add(getInlineKeyboardButton(SUBSCRIBED.toString(), ACTION + START_SUBSCRIBED.toString()));
@@ -229,8 +265,8 @@ public class UpdateService {
                 .resizeKeyboard(true)
                 .build();
         List<KeyboardRow> rows = new ArrayList<>();
-        rows.add(setKeyboardRow("Накопить кэшбек", "Списать баллы"));
-        rows.add(setKeyboardRow("Узнать наличие", "Правила кэшбека"));
+        rows.add(setKeyboardRow(ADD_CASHBACK.toString(), SUB_CASHBACK.toString()));
+        rows.add(setKeyboardRow(AVAILABILITY.toString(), CASHBACK_RULES.toString()));
 
         replyKeyboardMarkup.setKeyboard(rows);
         return replyKeyboardMarkup;
@@ -345,23 +381,37 @@ public class UpdateService {
     }
 
     // Functions
-    private void initPhones() {
-        List<PhoneDto> list = new ArrayList<>();
+    private void initLists() {
+        List<PhoneDto> phoneList = new ArrayList<>();
+        List<UserDto> userList = new ArrayList<>();
+        users = new HashMap<>();
+        usersIdByCode = new HashMap<>();
         try {
-            list = dataStorageService.getPhones();
+            phoneList = dataStorageService.getPhones();
             log.debug("Запрос к сервису БД выполнен");
         } catch (RetryableException e) {
             log.error("Ошибка запроса к сервису БД");
         }
-        if (!list.isEmpty()){
+        if (!phoneList.isEmpty()){
             Comparator<PhoneDto> compareByReleaseYear = Comparator
                     .comparing(PhoneDto::getReleaseYear);
-            phones = list.stream()
+            phones = phoneList.stream()
                     .sorted(compareByReleaseYear.reversed())
                     .collect(Collectors.toList());
             log.debug("Список телефонов отсортирован");
         }
-
+        try {
+            userList = dataStorageService.getUsers();
+            log.debug("Запрос к сервису БД выполнен");
+        } catch (RetryableException e) {
+            log.error("Ошибка запроса к сервису БД");
+        }
+        if (!userList.isEmpty()) {
+            for (UserDto user : userList) {
+                users.put(user.getTelegramId(), user);
+                usersIdByCode.put(user.getCode(), user.getTelegramId());
+            }
+        }
     }
     private String getInviteLink() {
         try {
@@ -393,11 +443,32 @@ public class UpdateService {
             return false;
         }
     }
+    private void newUser(User user) {
+        Long tgId = user.getId();
+        Integer code = (int) (Math.random() * (99999 - 10000) + 10000);
+        if (users.containsKey(tgId) && users.get(tgId).getCode().equals(code))
+            newUser(user);
+        UserDto userDto = UserDto.builder()
+                .telegramId(tgId)
+                .username(user.getUserName())
+                .code(code)
+                .cashback(0f)
+                .build();
+        users.put(tgId, userDto);
+        usersIdByCode.put(code, tgId);
+
+        dataStorageService.newUser(userDto);
+    }
+    private Integer getCodeById(Long id, User user) {
+        if (!users.containsKey(id))
+            newUser(user);
+        return users.get(id).getCode();
+    }
     public static boolean isNumeric(String str) {
         try {
             Double.parseDouble(str);
             return true;
-        } catch(NumberFormatException e){
+        } catch (NumberFormatException e){
             return false;
         }
     }
@@ -406,6 +477,23 @@ public class UpdateService {
                 .filter(phoneDto -> model.equals(phoneDto.getModel()))
                 .findAny()
                 .orElse(null);
+    }
+    private float calculateCashback(float cashback, UpdateUserDto update) {
+        float newCashback = cashback;
+        BigDecimal bd = BigDecimal.valueOf(update.getPurchaseAmount() * (update.getCashbackPercent() / 100.0));
+        bd = bd.setScale(1, RoundingMode.HALF_UP);
+        float operationData = bd.floatValue();
+
+        switch (update.getAction()) {
+            case "earn" -> newCashback += operationData;
+            case "spend" -> {
+                if (operationData > cashback)
+                    newCashback = 0;
+                else
+                    newCashback -= operationData;
+            }
+        }
+        return newCashback;
     }
     private SendMessage getMessageWithLink(Long chatId, String text, String url, int startIndex, int length) {
         List<MessageEntity> entities = new ArrayList<>();

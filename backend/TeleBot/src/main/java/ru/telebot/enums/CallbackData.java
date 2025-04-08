@@ -1,4 +1,4 @@
-package ru.telebot.bot.enums;
+package ru.telebot.enums;
 
 import java.util.Optional;
 

@@ -23,13 +23,13 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static ru.telebot.bot.enums.ScriptMessage.BOT_DESCRIPTION;
-import static ru.telebot.bot.enums.ScriptMessage.BOT_SHORT_DESCRIPTION;
+import static ru.telebot.enums.ScriptMessage.BOT_DESCRIPTION;
+import static ru.telebot.enums.ScriptMessage.BOT_SHORT_DESCRIPTION;
 
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
     /**
-     * TODO вопросы заказчику: автоподписка на канал, частота проверки подписки, скрипт тексты
+     * TODO вопросы заказчику: частота проверки подписки, скрипт тексты
      **/
     private final ExecutorService executorServiceForUpdates = Executors.newFixedThreadPool(5);
     private final ExecutorService executorServiceForSending = Executors.newFixedThreadPool(5);

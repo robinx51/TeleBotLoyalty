@@ -10,24 +10,16 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class UserDto {
+    @NotNull @Schema(name = "code", example = "99999")
+    private Integer code;
     @NotNull @Schema(name = "telegramId", example = "1234567890")
-    private String telegramId;
-
-    @NotNull @Schema(name = "firstName", example = "Александр")
-    private String firstName;
-
-    @Schema(name = "lastName", example = "Иванов")
-    private String lastName;
-
+    private Long telegramId;
     @Schema(name = "username", example = "ivanov")
     private String username;
-
+    @Schema(name = "first&lastName", example = "Александр Иванов")
+    private String name;
+    @Schema(name = "phoneNumber", example = "+7(987)654-32-10")
+    private String phoneNumber;
     @Schema(name = "cashback", example = "1000")
-    private Long cashback;
-
-    @Schema(name = "status", example = "add/sub")
-    private String status;
-
-    @Schema(name = "purchaseAmount", example = "69990.00")
-    private Double purchaseAmount;
+    private Float cashback;
 }

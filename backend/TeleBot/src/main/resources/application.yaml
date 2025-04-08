@@ -6,6 +6,10 @@ dataStorage:
 spring:
   profiles:
     active: dev
+  cloud:
+    inetutils:
+      preferred-networks: 127.0.0.1
+      timeout-seconds: 1
 
 logging:
   level:
