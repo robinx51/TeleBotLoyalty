@@ -33,8 +33,6 @@ build/
 ### VS Code ###
 .vscode/
 /src/main/resources/application-dev.yaml
-/DataStorage/src/main/resources/application-dev.yaml
-/TeleBot/src/main/resources/application-dev.yaml
 
 # dependencies
 /node_modules
@@ -75,3 +73,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/backend/TeleBot/src/main/resources/application-dev.yaml
+/backend/DataStorage/src/main/resources/application-dev.yaml

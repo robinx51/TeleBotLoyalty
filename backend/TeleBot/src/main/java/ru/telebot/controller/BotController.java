@@ -1,5 +1,6 @@
 package ru.telebot.controller;
 
+import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.telebot.bot.service.UpdateService;
@@ -20,7 +21,7 @@ public class BotController {
     }
 
     @GetMapping("/users/getByCode")
-    public UserDto getUserByCode(@RequestParam Integer code) {
+    public UserDto getUserByCode(@RequestParam Integer code) throws NotFoundException {
         return updateService.getUserByCode(code);
     }
 
@@ -29,4 +30,8 @@ public class BotController {
         updateService.updateUser(user);
     }
 
+    @PostMapping("/users/editUser")
+    public boolean editUser(@RequestBody UserDto user) {
+        return updateService.editUser(user);
+    }
 }

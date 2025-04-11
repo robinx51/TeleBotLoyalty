@@ -7,15 +7,6 @@ export interface User {
     cashback: number;
 }
 
-export interface TransactionFormData {
-    code: string;
-    name: string;
-    phoneNumber: string;
-    action: 'earn' | 'spend';
-    amount: number;
-    cashbackPercent: number;
-}
-
 export interface UpdateUserRequest {
     code: number;
     telegramId: number;
@@ -25,4 +16,5 @@ export interface UpdateUserRequest {
     action: 'earn' | 'spend';
     purchaseAmount: number;
     cashbackPercent: number;
+    spendAmount: number;
 }

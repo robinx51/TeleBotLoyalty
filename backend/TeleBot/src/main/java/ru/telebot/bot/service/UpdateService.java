@@ -1,6 +1,7 @@
 package ru.telebot.bot.service;
 
 import feign.RetryableException;
+import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,9 +54,12 @@ public class UpdateService {
         log.debug("Запрос списка пользователей");
         return users.values().stream().toList();
     }
-    public UserDto getUserByCode(Integer code) {
+    public UserDto getUserByCode(Integer code) throws NotFoundException {
         log.debug("Запрос пользователя с кодом: {}", code);
-        return users.get(usersIdByCode.get(code));
+        //if (usersIdByCode.containsKey(code))
+            return users.get(usersIdByCode.get(code));
+        //else
+            //throw new NotFoundException();
     }
     public void updateUser(UpdateUserDto update) {
         log.debug("Обновление данных пользователя с кодом: {}", update.getCode());
@@ -480,17 +484,18 @@ public class UpdateService {
     }
     private float calculateCashback(float cashback, UpdateUserDto update) {
         float newCashback = cashback;
-        BigDecimal bd = BigDecimal.valueOf(update.getPurchaseAmount() * (update.getCashbackPercent() / 100.0));
-        bd = bd.setScale(1, RoundingMode.HALF_UP);
-        float operationData = bd.floatValue();
-
         switch (update.getAction()) {
-            case "earn" -> newCashback += operationData;
+            case "earn" -> {
+                BigDecimal bd = BigDecimal.valueOf(update.getPurchaseAmount() * (update.getCashbackPercent() / 100.0));
+                bd = bd.setScale(1, RoundingMode.HALF_UP);
+                float operationData = bd.floatValue();
+                newCashback += operationData;
+            }
             case "spend" -> {
-                if (operationData > cashback)
+                if (update.getSpendAmount() > cashback)
                     newCashback = 0;
                 else
-                    newCashback -= operationData;
+                    newCashback -= update.getSpendAmount();
             }
         }
         return newCashback;
@@ -513,5 +518,17 @@ public class UpdateService {
                 .entities(entities)
                 .linkPreviewOptions(options)
                 .build();
+    }
+
+    public boolean editUser(UserDto user) {
+        if (!usersIdByCode.containsKey(user.getCode()))
+            return false;
+        try {
+            dataStorageService.updateUser(user);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+
     }
 }
