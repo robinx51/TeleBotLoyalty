@@ -14,7 +14,8 @@ public enum ScriptMessage {
     MODEL_TEXT("Выберите поколение:ㅤㅤㅤㅤㅤ"),
     TYPE_TEXT("\nВыберите тип:ㅤㅤㅤㅤㅤ"),
     MEMORY_TEXT("Укажите количество памяти:"),
-    CHOICE_TEXT("iPhone ");
+    CHOICE_TEXT("iPhone "),
+    RESPONSE_TEXT("Общий баланс: "); // Сообщение после операции
     private final String value;
 
     ScriptMessage(String value) {

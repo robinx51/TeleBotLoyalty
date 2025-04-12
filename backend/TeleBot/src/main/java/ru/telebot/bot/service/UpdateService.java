@@ -24,8 +24,6 @@ import ru.telebot.enums.CallbackData;
 import ru.telebot.dto.PhoneDto;
 import ru.telebot.dto.UserDto;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,10 +54,7 @@ public class UpdateService {
     }
     public UserDto getUserByCode(Integer code) throws NotFoundException {
         log.debug("Запрос пользователя с кодом: {}", code);
-        //if (usersIdByCode.containsKey(code))
-            return users.get(usersIdByCode.get(code));
-        //else
-            //throw new NotFoundException();
+        return users.get(usersIdByCode.get(code));
     }
     public void updateUser(UpdateUserDto update) {
         log.debug("Обновление данных пользователя с кодом: {}", update.getCode());
@@ -68,6 +63,7 @@ public class UpdateService {
         user.setPhoneNumber(update.getPhoneNumber());
         user.setCashback(calculateCashback(user.getCashback(), update));
         dataStorageService.updateUser(user);
+        bot.sendMessage(getResponsePage(user));
     }
 
     // Handlers
@@ -131,7 +127,8 @@ public class UpdateService {
                     handleUnsubscribe(message);
                 } else {
                     bot.sendMessage(getStartPage(message.getChatId()));
-                    newUser(user);
+                    if (!users.containsKey(user.getId()))
+                        newUser(user);
                 }
             } case "/help" -> {
 
@@ -383,6 +380,12 @@ public class UpdateService {
                 .replyMarkup(keyboardMarkup)
                 .build();
     }
+    private SendMessage getResponsePage(UserDto user) {
+        return SendMessage.builder()
+                .chatId(user.getTelegramId())
+                .text(RESPONSE_TEXT.toString() + user.getCashback())
+                .build();
+    }
 
     // Functions
     private void initLists() {
@@ -392,6 +395,7 @@ public class UpdateService {
         usersIdByCode = new HashMap<>();
         try {
             phoneList = dataStorageService.getPhones();
+            userList = dataStorageService.getUsers();
             log.debug("Запрос к сервису БД выполнен");
         } catch (RetryableException e) {
             log.error("Ошибка запроса к сервису БД");
@@ -403,12 +407,6 @@ public class UpdateService {
                     .sorted(compareByReleaseYear.reversed())
                     .collect(Collectors.toList());
             log.debug("Список телефонов отсортирован");
-        }
-        try {
-            userList = dataStorageService.getUsers();
-            log.debug("Запрос к сервису БД выполнен");
-        } catch (RetryableException e) {
-            log.error("Ошибка запроса к сервису БД");
         }
         if (!userList.isEmpty()) {
             for (UserDto user : userList) {
@@ -456,7 +454,7 @@ public class UpdateService {
                 .telegramId(tgId)
                 .username(user.getUserName())
                 .code(code)
-                .cashback(0f)
+                .cashback(0)
                 .build();
         users.put(tgId, userDto);
         usersIdByCode.put(code, tgId);
@@ -482,20 +480,16 @@ public class UpdateService {
                 .findAny()
                 .orElse(null);
     }
-    private float calculateCashback(float cashback, UpdateUserDto update) {
-        float newCashback = cashback;
+    private int calculateCashback(int cashback, UpdateUserDto update) {
+        int newCashback = cashback;
         switch (update.getAction()) {
-            case "earn" -> {
-                BigDecimal bd = BigDecimal.valueOf(update.getPurchaseAmount() * (update.getCashbackPercent() / 100.0));
-                bd = bd.setScale(1, RoundingMode.HALF_UP);
-                float operationData = bd.floatValue();
-                newCashback += operationData;
-            }
+            case "earn" ->
+                newCashback += update.getOperationAmount();
             case "spend" -> {
-                if (update.getSpendAmount() > cashback)
+                if (update.getOperationAmount() > cashback)
                     newCashback = 0;
                 else
-                    newCashback -= update.getSpendAmount();
+                    newCashback -= update.getOperationAmount();
             }
         }
         return newCashback;
@@ -519,7 +513,6 @@ public class UpdateService {
                 .linkPreviewOptions(options)
                 .build();
     }
-
     public boolean editUser(UserDto user) {
         if (!usersIdByCode.containsKey(user.getCode()))
             return false;
@@ -529,6 +522,5 @@ public class UpdateService {
         } catch (Exception e) {
             return false;
         }
-
     }
 }

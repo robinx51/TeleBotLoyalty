@@ -18,8 +18,8 @@ public class UserDto {
     private String username;
     @Schema(name = "first&lastName", example = "Александр Иванов")
     private String name;
-    @Schema(name = "phoneNumber", example = "+7(987)654-32-10")
+    @Schema(name = "phoneNumber", example = "+7 (987) 654-32-10")
     private String phoneNumber;
     @Schema(name = "cashback", example = "1000")
-    private Float cashback;
+    private int cashback;
 }

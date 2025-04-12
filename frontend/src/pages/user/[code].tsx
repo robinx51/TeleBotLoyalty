@@ -6,7 +6,7 @@ import styles from '../../styles/[code].module.css';
 import Head from "next/head";
 import { AxiosError } from "axios";
 
-export function getFormattedPhone (e: React.ChangeEvent<HTMLInputElement>) : string {
+export function getFormattedPhone(e: React.ChangeEvent<HTMLInputElement>): string {
     const input = e.target.value.replace(/\D/g, '');
     let formattedInput = '';
 
@@ -23,25 +23,24 @@ export default function UserPage() {
     const router = useRouter();
     const { code } = router.query;
     const [user, setUser] = useState<User | null>(null);
-    const [formData, setFormData] = useState<Omit<UpdateUserRequest, 'code' | 'telegramId' | 'cashback'>>({
+    const [formData, setFormData] = useState({
         name: '',
         phoneNumber: '',
-        action: 'earn',
-        purchaseAmount: 0,
-        cashbackPercent: 0,
-        spendAmount: 0
+        action: 'earn' as 'earn' | 'spend',
+        purchaseAmount: '',
+        cashbackPercent: '',
+        cashbackAmount: '',
+        operationAmount: ''
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const cashbackToAdd = formData.action === 'earn'
-        ? (formData.purchaseAmount * formData.cashbackPercent / 100.0).toFixed(1)
-        : '0.0';
-
+    // Расчетные значения
+    const currentCashback = user?.cashback || 0;
     const cashbackAfterOperation = formData.action === 'earn'
-        ? (user?.cashback || 0) + parseFloat(cashbackToAdd)
-        : (user?.cashback || 0) - (formData.spendAmount || 0);
+        ? currentCashback + parseInt(formData.cashbackAmount || '0')
+        : currentCashback - parseInt(formData.operationAmount || '0');
 
     // Загрузка данных пользователя
     useEffect(() => {
@@ -53,17 +52,14 @@ export default function UserPage() {
             await getUserByCode(code)
                 .then(function (userData) {
                     setUser(userData);
-                    setFormData({
+                    setFormData(prev => ({
+                        ...prev,
                         name: userData.name || '',
-                        phoneNumber: userData.phoneNumber || '',
-                        action: 'earn',
-                        purchaseAmount: 0,
-                        cashbackPercent: 0,
-                        spendAmount: 0
-                    });
+                        phoneNumber: userData.phoneNumber || ''
+                    }));
                 })
                 .catch(function (error) {
-                    if (error instanceof AxiosError && error.response.status == 500)
+                    if (error instanceof AxiosError && error.response?.status === 500)
                         setError('Соединение с сервером не установлено');
                     else
                         setError('Неизвестная ошибка');
@@ -74,6 +70,7 @@ export default function UserPage() {
         fetchUserData();
     }, [code]);
 
+    // Обработчики изменений
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
             ...formData,
@@ -81,13 +78,68 @@ export default function UserPage() {
         });
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
+    const handleActionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const action = e.target.value as 'earn' | 'spend';
         setFormData({
             ...formData,
-            [name]: name === 'purchaseAmount' || name === 'cashbackPercent' || name === 'spendAmount'
-                ? parseFloat(value) || 0
-                : value
+            action,
+            purchaseAmount: '',
+            cashbackPercent: '',
+            cashbackAmount: '',
+            operationAmount: ''
+        });
+    };
+
+    const handlePurchaseAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const purchaseAmount = e.target.value;
+        const cashbackPercent = purchaseAmount && formData.cashbackAmount
+            ? ((parseInt(formData.cashbackAmount) / parseInt(purchaseAmount)) * 100).toFixed(1)
+            : '';
+
+        setFormData({
+            ...formData,
+            purchaseAmount,
+            cashbackPercent
+        });
+    };
+
+    const handleCashbackPercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const cashbackPercent = e.target.value;
+        const cashbackAmount = cashbackPercent && formData.purchaseAmount
+            ? (parseInt(formData.purchaseAmount) * parseFloat(cashbackPercent) / 100).toFixed(0)
+            : '';
+
+        setFormData({
+            ...formData,
+            cashbackPercent,
+            cashbackAmount
+        });
+    };
+
+    const handleCashbackAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const cashbackAmount = e.target.value;
+        const cashbackPercent = cashbackAmount && formData.purchaseAmount
+            ? ((parseInt(cashbackAmount) / parseInt(formData.purchaseAmount)) * 100).toFixed(1)
+            : '';
+
+        setFormData({
+            ...formData,
+            cashbackAmount,
+            cashbackPercent
+        });
+    };
+
+    const handleOperationAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({
+            ...formData,
+            operationAmount: e.target.value
+        });
+    };
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({
+            ...formData,
+            name: e.target.value
         });
     };
 
@@ -96,6 +148,7 @@ export default function UserPage() {
         e.preventDefault();
         if (!user) return;
 
+        // Валидация
         if (!formData.name.trim()) {
             setError('Введите ФИ клиента');
             return;
@@ -108,26 +161,24 @@ export default function UserPage() {
         }
 
         if (formData.action === 'earn') {
-            if (formData.purchaseAmount <= 0) {
-                setError('Сумма покупки должна быть больше 0');
-                return;
-            }
-            if (formData.cashbackPercent <= 0 || formData.cashbackPercent > 50) {
-                setError('Процент кэшбека должен быть от 0 до 50');
+            const cashbackAmount = parseInt(formData.cashbackAmount || '0');
+            if (cashbackAmount <= 0) {
+                setError('Сумма кэшбэка должна быть больше 0');
                 return;
             }
         } else {
-            if (formData.spendAmount <= 0) {
+            const operationAmount = parseInt(formData.operationAmount || '0');
+            if (operationAmount <= 0) {
                 setError('Количество списываемых баллов должно быть больше 0');
                 return;
             }
-            if (formData.spendAmount > user.cashback) {
+            if (operationAmount > currentCashback) {
                 setError('Недостаточно баллов для списания');
                 return;
             }
         }
 
-        {
+        try {
             setLoading(true);
             setError('');
 
@@ -138,26 +189,26 @@ export default function UserPage() {
                 phoneNumber: formData.phoneNumber,
                 cashback: cashbackAfterOperation,
                 action: formData.action,
-                purchaseAmount: formData.action === 'earn' ? formData.purchaseAmount : 0,
-                cashbackPercent: formData.action === 'earn' ? formData.cashbackPercent : 0,
-                spendAmount: formData.action === 'spend' ? formData.spendAmount : 0
+                operationAmount: formData.action === 'earn'
+                    ? parseInt(formData.cashbackAmount || '0')
+                    : parseInt(formData.operationAmount || '0')
             };
 
             await updateUser(requestData)
                 .then(function () {
                     setSuccess('Данные успешно сохранены!');
                     setTimeout(() => {
-                        setSuccess('');
                         router.reload();
+                        setSuccess('');
                     }, 3000);
                 })
                 .catch(function (err) {
                     setError('Ошибка при сохранении данных');
                     console.error('Error saving data:', err);
                 });
+        } finally {
             setLoading(false);
         }
-
     };
 
     if (loading && !user) {
@@ -199,7 +250,7 @@ export default function UserPage() {
 
                                     <div className={styles.infoItem}>
                                         <div className={styles.infoLabel}>Текущий кэшбэк</div>
-                                        <div className={styles.infoValue}>{user.cashback.toFixed(1)} баллов</div>
+                                        <div className={styles.infoValue}>{currentCashback.toFixed(0)} баллов</div>
                                     </div>
 
                                     <div className={styles.formGroup}>
@@ -211,7 +262,7 @@ export default function UserPage() {
                                             id="name"
                                             name="name"
                                             value={formData.name}
-                                            onChange={handleChange}
+                                            onChange={handleNameChange}
                                             className={styles.inputField}
                                             required
                                         />
@@ -245,7 +296,7 @@ export default function UserPage() {
                                             id="action"
                                             name="action"
                                             value={formData.action}
-                                            onChange={handleChange}
+                                            onChange={handleActionChange}
                                             className={styles.selectField}
                                             required
                                         >
@@ -258,64 +309,80 @@ export default function UserPage() {
                                         <>
                                             <div className={styles.formGroup}>
                                                 <label htmlFor="purchaseAmount" className={styles.formLabel}>
-                                                    Сумма покупки*
+                                                    Сумма покупки
                                                 </label>
                                                 <input
                                                     type="number"
                                                     id="purchaseAmount"
                                                     name="purchaseAmount"
-                                                    value={formData.purchaseAmount || ''}
-                                                    onChange={handleChange}
+                                                    value={formData.purchaseAmount}
+                                                    onChange={handlePurchaseAmountChange}
                                                     className={styles.inputField}
                                                     min="0"
-                                                    max="9999999.99"
                                                     step="1"
-                                                    placeholder="0.00"
-                                                    required
+                                                    placeholder="0"
                                                 />
                                             </div>
 
                                             <div className={styles.formGroup}>
                                                 <label htmlFor="cashbackPercent" className={styles.formLabel}>
-                                                    % кэшбека*
+                                                    % кэшбека
                                                 </label>
                                                 <input
                                                     type="number"
                                                     id="cashbackPercent"
                                                     name="cashbackPercent"
-                                                    value={formData.cashbackPercent || ''}
-                                                    onChange={handleChange}
+                                                    value={formData.cashbackPercent}
+                                                    onChange={handleCashbackPercentChange}
                                                     className={styles.inputField}
                                                     min="0"
-                                                    max="50"
-                                                    step="1"
+                                                    step="0.1"
                                                     placeholder="0.0"
+                                                />
+                                            </div>
+
+                                            <div className={styles.formGroup}>
+                                                <label htmlFor="cashbackAmount" className={styles.formLabel}>
+                                                    Начислить баллов*
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    id="cashbackAmount"
+                                                    name="cashbackAmount"
+                                                    value={formData.cashbackAmount}
+                                                    onChange={handleCashbackAmountChange}
+                                                    className={styles.inputField}
+                                                    min="0"
+                                                    step="1"
+                                                    placeholder="0"
                                                     required
                                                 />
                                             </div>
 
                                             <div className={styles.infoItem}>
-                                                <div className={styles.infoLabel}>Накопится баллов</div>
-                                                <div className={styles.infoValue}>{cashbackToAdd}</div>
+                                                <div className={styles.infoLabel}>Будет на счету</div>
+                                                <div className={styles.infoValue}>
+                                                    {cashbackAfterOperation.toFixed(0)} баллов
+                                                </div>
                                             </div>
                                         </>
                                     ) : (
                                         <>
                                             <div className={styles.formGroup}>
-                                                <label htmlFor="spendAmount" className={styles.formLabel}>
+                                                <label htmlFor="operationAmount" className={styles.formLabel}>
                                                     Списать баллов*
                                                 </label>
                                                 <input
                                                     type="number"
-                                                    id="spendAmount"
-                                                    name="spendAmount"
-                                                    value={formData.spendAmount || ''}
-                                                    onChange={handleChange}
+                                                    id="operationAmount"
+                                                    name="operationAmount"
+                                                    value={formData.operationAmount}
+                                                    onChange={handleOperationAmountChange}
                                                     className={styles.inputField}
                                                     min="0"
-                                                    max={user.cashback}
-                                                    step="100"
-                                                    placeholder="0.0"
+                                                    max={currentCashback}
+                                                    step="1"
+                                                    placeholder="0"
                                                     required
                                                 />
                                             </div>
@@ -323,7 +390,7 @@ export default function UserPage() {
                                             <div className={styles.infoItem}>
                                                 <div className={styles.infoLabel}>Останется баллов</div>
                                                 <div className={styles.infoValue}>
-                                                    {Math.max(0, cashbackAfterOperation).toFixed(1)}
+                                                    {Math.max(0, cashbackAfterOperation).toFixed(0)}
                                                 </div>
                                             </div>
                                         </>

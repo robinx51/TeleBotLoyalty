@@ -14,6 +14,5 @@ public class UpdateUserDto {
     private float cashback;
     private String action;
     private Long purchaseAmount;
-    private float cashbackPercent;
-    private float spendAmount;
+    private int operationAmount;
 }

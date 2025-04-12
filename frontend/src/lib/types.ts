@@ -14,7 +14,5 @@ export interface UpdateUserRequest {
     phoneNumber: string;
     cashback: number;
     action: 'earn' | 'spend';
-    purchaseAmount: number;
-    cashbackPercent: number;
-    spendAmount: number;
+    operationAmount: number;
 }
