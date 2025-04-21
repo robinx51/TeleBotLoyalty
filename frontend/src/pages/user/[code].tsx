@@ -6,8 +6,8 @@ import styles from '../../styles/[code].module.css';
 import Head from "next/head";
 import { AxiosError } from "axios";
 
-export function getFormattedPhone(e: React.ChangeEvent<HTMLInputElement>): string {
-    const input = e.target.value.replace(/\D/g, '');
+export function getFormattedPhone(inputStr: string ): string {
+    const input = inputStr.replace(/\D/g, '');
     let formattedInput = '';
 
     if (input.length > 0) {
@@ -55,7 +55,7 @@ export default function UserPage() {
                     setFormData(prev => ({
                         ...prev,
                         name: userData.name || '',
-                        phoneNumber: userData.phoneNumber || ''
+                        phoneNumber: getFormattedPhone(userData.phoneNumber) || ''
                     }));
                 })
                 .catch(function (error) {
@@ -74,7 +74,7 @@ export default function UserPage() {
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
             ...formData,
-            phoneNumber: getFormattedPhone(e)
+            phoneNumber: getFormattedPhone(e.target.value)
         });
     };
 
@@ -186,7 +186,7 @@ export default function UserPage() {
                 code: user.code,
                 telegramId: user.telegramId,
                 name: formData.name,
-                phoneNumber: formData.phoneNumber,
+                phoneNumber: phoneDigits,
                 cashback: cashbackAfterOperation,
                 action: formData.action,
                 operationAmount: formData.action === 'earn'
@@ -257,31 +257,38 @@ export default function UserPage() {
                                         <label htmlFor="name" className={styles.formLabel}>
                                             Фамилия и имя*
                                         </label>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleNameChange}
-                                            className={styles.inputField}
-                                            required
-                                        />
+                                        {user.name === '' ? (
+                                            <input
+                                                type="text"
+                                                id="name"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleNameChange}
+                                                className={styles.inputField}
+                                                required
+                                            />) : (
+                                            <div className={styles.infoValue}>{user.name}</div>
+                                            )}
                                     </div>
 
                                     <div className={styles.formGroup}>
                                         <label htmlFor="phoneNumber" className={styles.formLabel}>
                                             Номер телефона*
                                         </label>
-                                        <input
-                                            type="tel"
-                                            id="phoneNumber"
-                                            name="phoneNumber"
-                                            value={formData.phoneNumber}
-                                            onChange={handlePhoneChange}
-                                            className={`${styles.inputField} ${styles.phoneInput}`}
-                                            placeholder="+7 (999) 999-99-99"
-                                            required
-                                        />
+                                        {user.name === '' ? (
+                                            <input
+                                                type="tel"
+                                                id="phoneNumber"
+                                                name="phoneNumber"
+                                                value={formData.phoneNumber}
+                                                onChange={handlePhoneChange}
+                                                className={`${styles.inputField} ${styles.phoneInput}`}
+                                                placeholder="+7 (999) 999-99-99"
+                                                required
+                                            />
+                                            ) : (
+                                            <div className={styles.infoValue}>{formData.phoneNumber}</div>
+                                            )}
                                     </div>
                                 </div>
                             </div>

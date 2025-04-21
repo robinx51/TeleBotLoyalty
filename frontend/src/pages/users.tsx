@@ -13,7 +13,7 @@ export default function UsersPage() {
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [editingUser, setEditingUser] = useState<User | null>(null);
+    //const [editingUser, setEditingUser] = useState<User | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [searchField, setSearchField] = useState<keyof User>('code');
@@ -76,62 +76,61 @@ export default function UsersPage() {
         setCurrentPage(1);
     };
 
-    const handleEditClick = (user: User) => {
-        setEditingUser({ ...user });
-    };
-
-    const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof User) => {
-        if (editingUser) {
-            setEditingUser({
-                ...editingUser,
-                [field]: e.target.value
-            });
-        }
-    };
-
-    // Обработчик изменения телефонного номера
-    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEditingUser({
-            ...editingUser,
-            phoneNumber: getFormattedPhone(e)
-        });
-    };
-
-    const handleSaveClick = async () => {
-        if (editingUser) {
-            setLoading(true);
-            try {
-                const success = await editUser(editingUser);
-                if (success) {
-                    setUsers(users.map(user =>
-                        user.code === editingUser.code ? editingUser : user
-                    ));
-                    setEditingUser(null);
-                } else {
-                    setError('Не удалось обновить пользователя');
-                }
-            } catch (err) {
-                setError('Ошибка при обновлении пользователя');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        }
-    };
-
-    const handleCancelClick = () => {
-        setEditingUser(null);
-    };
-
-    const formatPhoneNumber = (phone: string) => {
-        if (!phone) return '';
-        const cleaned = ('' + phone).replace(/\D/g, '');
-        const match = cleaned.match(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/);
-        if (match) {
-            return `+${match[1]} (${match[2]}) ${match[3]}-${match[4]}-${match[5]}`;
-        }
-        return phone;
-    };
+    // const handleEditClick = (user: User) => {
+    //     setEditingUser({ ...user });
+    // };
+    //
+    // const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof User) => {
+    //     if (editingUser) {
+    //         setEditingUser({
+    //             ...editingUser,
+    //             [field]: e.target.value
+    //         });
+    //     }
+    // };
+    //
+    // // Обработчик изменения телефонного номера
+    // const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     setEditingUser({
+    //         ...editingUser,
+    //         phoneNumber: getFormattedPhone(e)
+    //     });
+    // };
+    //
+    // const handleSaveClick = async () => {
+    //     if (editingUser) {
+    //         setLoading(true);
+    //         try {
+    //             const success = await editUser(editingUser);
+    //             if (success) {
+    //                 setUsers(users.map(user =>
+    //                     user.code === editingUser.code ? editingUser : user
+    //                 ));
+    //                 setEditingUser(null);
+    //             } else {
+    //                 setError('Не удалось обновить пользователя');
+    //             }
+    //         } catch (err) {
+    //             setError('Ошибка при обновлении пользователя');
+    //             console.error(err);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     }
+    // };
+    //
+    // const handleCancelClick = () => {
+    //     setEditingUser(null);
+    // };
+    // const formatPhoneNumber = (phone: string) => {
+    //     if (!phone) return '';
+    //     const cleaned = ('' + phone).replace(/\D/g, '');
+    //     const match = cleaned.match(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/);
+    //     if (match) {
+    //         return `+${match[1]} (${match[2]}) ${match[3]}-${match[4]}-${match[5]}`;
+    //     }
+    //     return phone;
+    // };
 
     // Navigation functions
     const navigateToHome = () => {
@@ -205,7 +204,7 @@ export default function UsersPage() {
                                     <th className={styles.th}>Username</th>
                                     <th className={styles.th}>Телефон</th>
                                     <th className={styles.th}>Кэшбэк</th>
-                                    <th className={styles.th}>Действия</th>
+                                    {/*<th className={styles.th}>Действия</th>*/}
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -219,70 +218,43 @@ export default function UsersPage() {
                                                 {user.code}
                                             </td>
                                             <td className={styles.td}>
-                                                {editingUser?.code === user.code ? (
-                                                    <input
-                                                        type="text"
-                                                        value={editingUser.name}
-                                                        onChange={(e) => handleEditChange(e, 'name')}
-                                                        className={styles.editInput}
-                                                    />
-                                                ) : (
-                                                    user.name || '-'
-                                                )}
+                                                {user.name || '-'}
                                             </td>
                                             <td className={styles.td}>
-                                                {editingUser?.code === user.code ? (
-                                                    <input
-                                                        type="text"
-                                                        value={editingUser.username}
-                                                        onChange={(e) => handleEditChange(e, 'username')}
-                                                        className={styles.editInput}
-                                                    />
-                                                ) : (
-                                                    user.username
-                                                )}
+                                                {user.username}
                                             </td>
                                             <td className={styles.td}>
-                                                {editingUser?.code === user.code ? (
-                                                    <input
-                                                        type="tel"
-                                                        value={editingUser.phoneNumber}
-                                                        onChange={(e) => handlePhoneChange(e)}
-                                                        className={styles.editInput}
-                                                    />
-                                                ) : (
-                                                    formatPhoneNumber(user.phoneNumber) || '-'
-                                                )}
+                                                {getFormattedPhone(user.phoneNumber) || '-'}
                                             </td>
                                             <td className={styles.td}>
                                                 {user.cashback}
                                             </td>
-                                            <td className={styles.td}>
-                                                {editingUser?.code === user.code ? (
-                                                    <div className={styles.editButtons}>
-                                                        <button
-                                                            onClick={handleSaveClick}
-                                                            disabled={loading}
-                                                            className={`${styles.button} ${styles.saveButton}`}
-                                                        >
-                                                            Сохранить
-                                                        </button>
-                                                        <button
-                                                            onClick={handleCancelClick}
-                                                            className={`${styles.button} ${styles.cancelButton}`}
-                                                        >
-                                                            Отмена
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => handleEditClick(user)}
-                                                        className={`${styles.button} ${styles.editButton}`}
-                                                    >
-                                                        Редактировать
-                                                    </button>
-                                                )}
-                                            </td>
+                                            {/*<td className={styles.td}>*/}
+                                            {/*    {editingUser?.code === user.code ? (*/}
+                                            {/*        <div className={styles.editButtons}>*/}
+                                            {/*            <button*/}
+                                            {/*                onClick={handleSaveClick}*/}
+                                            {/*                disabled={loading}*/}
+                                            {/*                className={`${styles.button} ${styles.saveButton}`}*/}
+                                            {/*            >*/}
+                                            {/*                Сохранить*/}
+                                            {/*            </button>*/}
+                                            {/*            <button*/}
+                                            {/*                onClick={handleCancelClick}*/}
+                                            {/*                className={`${styles.button} ${styles.cancelButton}`}*/}
+                                            {/*            >*/}
+                                            {/*                Отмена*/}
+                                            {/*            </button>*/}
+                                            {/*        </div>*/}
+                                            {/*    ) : (*/}
+                                            {/*        <button*/}
+                                            {/*            onClick={() => handleEditClick(user)}*/}
+                                            {/*            className={`${styles.button} ${styles.editButton}`}*/}
+                                            {/*        >*/}
+                                            {/*            Редактировать*/}
+                                            {/*        </button>*/}
+                                            {/*    )}*/}
+                                            {/*</td>*/}
                                         </tr>
                                     ))
                                 ) : (
