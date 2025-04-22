@@ -85,7 +85,7 @@ public class OneCService {
                 .model(model)
                 .type(type.isEmpty() ? "" : type)
                 .price(phoneItem.getPrice())
-                .phone(processedPhone)
+                .fullName(processedPhone)
                 .color(phoneItem.getColors())
                 .build();
     }

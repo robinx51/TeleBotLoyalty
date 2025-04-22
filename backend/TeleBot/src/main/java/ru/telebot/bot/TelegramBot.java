@@ -28,9 +28,6 @@ import static ru.telebot.enums.ScriptMessage.BOT_SHORT_DESCRIPTION;
 
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
-    /**
-     * TODO вопросы заказчику: частота проверки подписки, скрипт тексты
-     **/
     private final ExecutorService executorServiceForUpdates = Executors.newFixedThreadPool(5);
     private final ExecutorService executorServiceForSending = Executors.newFixedThreadPool(5);
     private static final Logger logger = LoggerFactory.getLogger(TelegramBot.class);
@@ -108,30 +105,3 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 }
-//    public void forceSubscribeUser(Long chatId) {
-//        try {
-//            // Или через invite link
-//            String inviteLink = createInviteLink();
-//            execute(new SendMessage(chatId.toString(), "Вы были подписаны на канал: " + inviteLink));
-//        } catch (TelegramApiException e) {
-//            logger.error(e.getMessage());
-//        }
-//    }
-//
-//    private String createInviteLink() throws TelegramApiException {
-//        CreateChatInviteLink link = CreateChatInviteLink.builder()
-//                .chatId('@' + channelName)
-//                .createsJoinRequest(false)
-//                .build();
-//        ChatInviteLink inviteLink = execute(link);
-//        return inviteLink.getInviteLink();
-//    }
-//
-//    private void addUser(Long userid) {
-//        ChatJoinRequest request = new ChatJoinRequest();
-//        request.setUserChatId(userid);
-//        request.setInviteLink(createInviteLink());
-//        //InviteChatToChannel inviteRequest = new InviteChatToChannel('@' + channelName, "USER_TO_INVITE_ID");
-//        //getAdmins.setChatId();
-//
-//    }

@@ -37,13 +37,14 @@ import static ru.telebot.enums.ScriptMessage.*;
 @Slf4j
 @RequiredArgsConstructor
 public class UpdateService {
-    /// TODO обработка после выбора типа
     private TelegramBot bot;
     private final DataStorageService dataStorageService;
     private final OneCService oneCService;
 
     @Value("@${bot.channelName}")
     private String channelName;
+    @Value("${bot.managerId}")
+    private String managerId;
     private Map<String, List<PhoneDto>> phones;
     private Map<Long, UserDto> users;
     private Map<Integer, Long> usersIdByCode;
@@ -181,78 +182,131 @@ public class UpdateService {
 
         String[] pages = callbackQuery.getData().split("_");
 
-
+        Optional<CallbackData> firstPage = CallbackData.fromValue(pages[0]);
         Optional<CallbackData> lastPage = CallbackData.fromValue(pages[pages.length-1]);
-        if (lastPage.isEmpty()) {
-            if (isNumeric((pages[pages.length-1]))) {
-                EditMessageText result = handleInteger(pages, callbackQuery);
-                editMessage.setText(result.getText());
-                editMessage.setReplyMarkup(result.getReplyMarkup());
-            }
-            else {
-                log.error("Ошибочный Callback");
-                return;
-            }
-        } else {
-            switch (lastPage.get()) {
-                case START_SUBSCRIBED -> {
-                    if (isUserSubscribed(callbackQuery.getFrom().getId())) {
-                        editMessage.setText(String.valueOf(AFTER_SUBSCRIBE));
-                        newMessage = SendMessage.builder()
-                                .chatId(chatId)
-                                .replyMarkup(getStartKeyboard())
-                                .text(String.valueOf(SUBSCRIBED_START))
-                                .build();
-                    } else {
-                        editMessage.setText(String.valueOf(REPEATED_UNSUBSCRIBED));
-                        editMessage.setReplyMarkup(getSubscribeKeyboard());
-                    }
+
+        //page_phones_used_15_pro_256
+        if (firstPage.isPresent()) {
+            switch (pages.length) {
+                case 4 -> {
+                    EditMessageText result = handleModel(pages, callbackQuery);
+                    editMessage.setText(result.getText());
+                    editMessage.setReplyMarkup(result.getReplyMarkup());
                 }
-                case PHONES_PAGE -> {
-                    EditMessageText page = getAvailabilityPage();
-                    editMessage.setText(page.getText());
-                    editMessage.setReplyMarkup(page.getReplyMarkup());
-                }
-                case NEW_PAGE, USED_PAGE -> {
-                    EditMessageText phonesPage = getPhonesPage(callbackQuery.getData(), lastPage.get().toString());
-                    editMessage.setText(phonesPage.getText());
-                    editMessage.setReplyMarkup(phonesPage.getReplyMarkup());
+                case 5 -> {
+                    EditMessageText result = handleType(pages, callbackQuery);
+                    editMessage.setText(result.getText());
+                    editMessage.setReplyMarkup(result.getReplyMarkup());
                 }
                 default -> {
-                    log.warn("Необработанный callback: {}", lastPage);
-                    return;
+                    if (lastPage.isPresent()) {
+                        switch (lastPage.get()) {
+                            case START_SUBSCRIBED -> {
+                                if (isUserSubscribed(callbackQuery.getFrom().getId())) {
+                                    editMessage.setText(String.valueOf(AFTER_SUBSCRIBE));
+                                    newMessage = SendMessage.builder()
+                                            .chatId(chatId)
+                                            .replyMarkup(getStartKeyboard())
+                                            .text(String.valueOf(SUBSCRIBED_START))
+                                            .build();
+                                } else {
+                                    editMessage.setText(String.valueOf(REPEATED_UNSUBSCRIBED));
+                                    editMessage.setReplyMarkup(getSubscribeKeyboard());
+                                }
+                            }
+                            case PHONES_PAGE -> {
+                                EditMessageText page = getAvailabilityPage();
+                                editMessage.setText(page.getText());
+                                editMessage.setReplyMarkup(page.getReplyMarkup());
+                            }
+                            case NEW_PAGE, USED_PAGE -> {
+                                EditMessageText phonesPage = getPhonesPage(callbackQuery.getData(), lastPage.get().toString());
+                                editMessage.setText(phonesPage.getText());
+                                editMessage.setReplyMarkup(phonesPage.getReplyMarkup());
+                            }
+                            default -> {
+                                log.warn("Необработанный callback: {}", lastPage);
+                                return;
+                            }
+                        }
+                    }
                 }
             }
         }
+
 
         bot.sendEditedMessage(editMessage);
         bot.sendMessage(newMessage);
         bot.sendCallbackAnswer(callbackQuery.getId());
     }
-    private EditMessageText handleInteger(String[] pages, CallbackQuery callbackQuery) {
+
+    private EditMessageText handleModel(String[] pages, CallbackQuery callbackQuery) {
         EditMessageText message = new EditMessageText();
-        String model = pages[3];
+        //page_phones_used_15_pro_256
         String condition = pages[2];
-        String text = CHOICE_TEXT + model;
-        switch (pages.length) {
-            // Выбрано поколение
-            case 4 -> {
-                text += TYPE_TEXT.toString();
-                message.setText(text);
-                message.setReplyMarkup(getModelsKeyboard(model, callbackQuery.getData(), condition));
-            }
-            // Выбран Pro/Pro Max и т.д.
-            case 5 -> {
-                String type = pages[4];
-                //text += " " + type + MEMORY_TEXT;
-                //message.setText(text + type);
-                //message.setReplyMarkup(getMemoryKeyboard(model, callbackQuery.getData()));
+        String model = pages[3];
+        message.setText(CHOICE_TEXT + model + TYPE_TEXT);
+        message.setReplyMarkup(getModelsKeyboard(model, callbackQuery.getData(), condition));
+        return message;
+    }
+    private EditMessageText handleType(String[] pages, CallbackQuery callbackQuery) {
+        EditMessageText message = new EditMessageText();
+        String condition = pages[2], model = pages[3], type = pages[4];
+
+        List<PhoneDto> phonesByType = getPhonesByType(condition, model,  type);
+        StringBuilder text = new StringBuilder()
+                .append(CHOICE_TEXT)
+                .append(model).append(" ")
+                .append(type);
+
+        notificationToManager(text.toString(), callbackQuery.getFrom().getUserName());
+
+        text.append(" в наличии: \n\n");
+
+        List<String> fullNames = new ArrayList<>();
+        for (PhoneDto phone : phonesByType) {
+            for (String color : phone.getColor()) {
+                String fullName = phone.getFullName() + " " +
+                        color + " - " +
+                        phone.getPrice() + "р";
+                fullNames.add(fullName);
             }
         }
+        text.append(String.join("\n", fullNames));
+
+        message.setText(text.toString());
+        message.setReplyMarkup(getFullNamesKeyboard(callbackQuery.getData()));
         return message;
     }
 
     // Keyboards
+    private InlineKeyboardMarkup getGridKeyboard(String prefixText, List<String> elements, String callbackData) {
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        int totalTypes = elements.size();
+        int index = 0;
+
+        // Обработка первого ряда для нечётного количества
+        if (totalTypes % 2 != 0) {
+            List<InlineKeyboardButton> firstRow = new ArrayList<>();
+            firstRow.add(getInlineKeyboardButton(prefixText + elements.get(index), callbackData, elements.get(index++)));
+            buttons.add(firstRow);
+        }
+
+        // Обработка оставшихся кнопок по 2 в ряду
+        while (index < totalTypes) {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            row.add(getInlineKeyboardButton(prefixText + elements.get(index), callbackData, elements.get(index++)));
+            if (index < totalTypes) {
+                row.add(getInlineKeyboardButton(prefixText + elements.get(index), callbackData, elements.get(index++)));
+            }
+            buttons.add(row);
+        }
+        buttons.add(getButtonBack(callbackData));
+        keyboard.setKeyboard(buttons);
+
+        return keyboard;
+    }
     private InlineKeyboardMarkup getSubscribeKeyboard() {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<InlineKeyboardButton> row = new ArrayList<>();
@@ -295,32 +349,15 @@ public class UpdateService {
         }
         return keyboardMarkup;
     }
-    private InlineKeyboardMarkup getGridKeyboard(String prefixText, List<String> elements, String callbackData) {
-        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
-        int totalTypes = elements.size();
-        int index = 0;
+    private InlineKeyboardMarkup getFullNamesKeyboard(String pageHistory) {
+        // В начало и назад
+        List<InlineKeyboardButton> row = getButtonBack(pageHistory);
+        row.add(getInlineKeyboardButton("В начало", PAGE + "_" + PHONES_PAGE));
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        rows.add(row);
 
-        // Обработка первого ряда для нечётного количества
-        if (totalTypes % 2 != 0) {
-            List<InlineKeyboardButton> firstRow = new ArrayList<>();
-            firstRow.add(getInlineKeyboardButton(prefixText + elements.get(index), callbackData, elements.get(index++)));
-            buttons.add(firstRow);
-        }
-
-        // Обработка оставшихся кнопок по 2 в ряду
-        while (index < totalTypes) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(getInlineKeyboardButton(prefixText + elements.get(index), callbackData, elements.get(index++)));
-            if (index < totalTypes) {
-                row.add(getInlineKeyboardButton(prefixText + elements.get(index), callbackData, elements.get(index++)));
-            }
-            buttons.add(row);
-        }
-        buttons.add(getButtonBack(callbackData));
-        keyboard.setKeyboard(buttons);
-
-        return keyboard;
+        return InlineKeyboardMarkup.builder()
+                .keyboard(rows).build();
     }
 
     // Elements for keyboards
@@ -340,7 +377,7 @@ public class UpdateService {
     }
     private static InlineKeyboardButton getInlineKeyboardButton(String text, String callbackData, String newPage) {
         if (newPage.isEmpty()) {
-            newPage = COMMON_MODEL.toString();
+            newPage = COMMON_TYPE.toString();
         }
         return InlineKeyboardButton.builder()
                 .text(text)
@@ -351,7 +388,7 @@ public class UpdateService {
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = InlineKeyboardButton.builder()
                 .text(BACK_BUTTON.toString())
-                .callbackData(pageHistory.substring(0,pageHistory.lastIndexOf("_")))
+                .callbackData(pageHistory.substring(0, pageHistory.lastIndexOf("_")))
                 .build();
         row.add(button);
         return row;
@@ -367,7 +404,7 @@ public class UpdateService {
     }
     private EditMessageText getAvailabilityPage() {
         List<InlineKeyboardButton> buttons = new ArrayList<>();
-        String callback = PAGE + PHONES_PAGE.toString() + "_";
+        String callback = PAGE + "_" + PHONES_PAGE + "_";
         buttons.add(getInlineKeyboardButton(NEW_BUTTON.toString(), callback + NEW_PAGE));
         buttons.add(getInlineKeyboardButton(USED_BUTTON.toString(), callback + USED_PAGE));
         InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
@@ -477,20 +514,18 @@ public class UpdateService {
             newUser(user);
         return users.get(id).getCode();
     }
-    public static boolean isNumeric(String str) {
-        try {
-            Double.parseDouble(str);
-            return true;
-        } catch (NumberFormatException e){
-            return false;
-        }
-    }
     private List<String> getTypesByModel(String model, String condition) {
         return phones.get(condition).stream()
                 .filter(phoneDto -> model.equals(phoneDto.getModel()))
                 .map(PhoneDto::getType)
                 .distinct()
                 .sorted(Comparator.reverseOrder())
+                .toList();
+    }
+    private List<PhoneDto> getPhonesByType(String condition, String model, String type) {
+        return phones.get(condition).stream()
+                .filter(phoneDto -> model.equals(phoneDto.getModel()))
+                .filter(phoneDto -> type.equals(phoneDto.getType()))
                 .toList();
     }
     private int calculateCashback(int cashback, UpdateUserDto update) {
@@ -507,23 +542,12 @@ public class UpdateService {
         }
         return newCashback;
     }
-    private SendMessage getMessageWithLink(Long chatId, String text, String url, int startIndex, int length) {
-        List<MessageEntity> entities = new ArrayList<>();
-        LinkPreviewOptions options = new LinkPreviewOptions();
-
-        entities.add(MessageEntity.builder()
-                .type("text_link")
-                .offset(startIndex)
-                .length(length)
-                .url(url)
-                .build());
-        options.setUrlField(url);
-
-        return SendMessage.builder()
-                .chatId(chatId)
+    private void notificationToManager(String phone, String username) {
+        String text = "@" + username + " интересовался наличием\n" + phone;
+        SendMessage message = SendMessage.builder()
+                .chatId(managerId)
                 .text(text)
-                .entities(entities)
-                .linkPreviewOptions(options)
                 .build();
+        bot.sendMessage(message);
     }
 }

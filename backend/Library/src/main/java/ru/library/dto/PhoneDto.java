@@ -21,7 +21,7 @@ public class PhoneDto {
     private int price;
 
     @Schema(name = "phone", example = "IPhone 15 Pro Max 256Gb")
-    private String phone;
+    private String fullName;
 
     @Schema(name = "color", example = "Black")
     private List<String> color;

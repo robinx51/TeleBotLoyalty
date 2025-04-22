@@ -7,15 +7,13 @@ public enum CallbackData {
     PHONES_PAGE("phones"),
     USED_PAGE("used"),
     NEW_PAGE("new"),
-    PAGE("page_"),
+    PAGE("page"),
     ACTION("action_"),
-    COMMON_MODEL("common"),
+    COMMON_TYPE("common"),
     PRO_TYPE("Pro"),
     PRO_MAX_TYPE("Pro Max"),
     MINI_TYPE("mini"),
-    PLUS_TYPE("Plus"),
-    E_TYPE("e");
-//page_phones_used_15_pro_256
+    PLUS_TYPE("Plus");
     private final String value;
 
     CallbackData(String value) {
