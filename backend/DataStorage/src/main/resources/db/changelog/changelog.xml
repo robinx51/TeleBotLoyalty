@@ -6,6 +6,4 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <include file="changeset-init-database.xml" relativeToChangelogFile="true"/>
-    <include file="changeset-fill-phones.xml" relativeToChangelogFile="true"/>
-    <include file="changeset-init-table-users.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

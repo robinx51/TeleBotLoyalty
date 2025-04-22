@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.telebot.bot.service.UpdateService;
 import ru.telebot.dto.UpdateUserDto;
-import ru.telebot.dto.UserDto;
+import ru.library.dto.UserDto;
 
 import java.util.List;
 
@@ -26,12 +26,7 @@ public class BotController {
     }
 
     @PostMapping("/users/update")
-    public void updateUser(@RequestBody UpdateUserDto user) {
-        updateService.updateUser(user);
-    }
-
-    @PostMapping("/users/editUser")
-    public boolean editUser(@RequestBody UserDto user) {
-        return updateService.editUser(user);
+    public boolean updateUser(@RequestBody UpdateUserDto user) {
+        return updateService.updateUser(user);
     }
 }

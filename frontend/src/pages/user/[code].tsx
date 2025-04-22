@@ -7,7 +7,7 @@ import Head from "next/head";
 import { AxiosError } from "axios";
 
 export function getFormattedPhone(inputStr: string ): string {
-    const input = inputStr.replace(/\D/g, '');
+    const input = inputStr === null ?  "" : inputStr.replace(/\D/g, '');
     let formattedInput = '';
 
     if (input.length > 0) {
@@ -55,7 +55,7 @@ export default function UserPage() {
                     setFormData(prev => ({
                         ...prev,
                         name: userData.name || '',
-                        phoneNumber: getFormattedPhone(userData.phoneNumber) || ''
+                        phoneNumber: userData.phoneNumber ? getFormattedPhone(userData.phoneNumber) : ''
                     }));
                 })
                 .catch(function (error) {
@@ -195,16 +195,20 @@ export default function UserPage() {
             };
 
             await updateUser(requestData)
-                .then(function () {
-                    setSuccess('Данные успешно сохранены!');
-                    setTimeout(() => {
-                        router.reload();
-                        setSuccess('');
-                    }, 3000);
+                .then(function (isSuccess) {
+                    if (isSuccess){
+                        setSuccess('Данные успешно сохранены!');
+                        setTimeout(() => {
+                            router.reload();
+                            setSuccess('');
+                        }, 3000);
+                    } else setError('Ошибка сохранения данных');
                 })
-                .catch(function (err) {
-                    setError('Ошибка при сохранении данных');
-                    console.error('Error saving data:', err);
+                .catch(function (error) {
+                    if (error instanceof AxiosError && error.response?.status === 500)
+                        setError('Соединение с сервером потеряно');
+                    else
+                        setError('Неизвестная ошибка');
                 });
         } finally {
             setLoading(false);
@@ -257,7 +261,7 @@ export default function UserPage() {
                                         <label htmlFor="name" className={styles.formLabel}>
                                             Фамилия и имя*
                                         </label>
-                                        {user.name === '' ? (
+                                        {!user.name ? (
                                             <input
                                                 type="text"
                                                 id="name"
@@ -275,7 +279,7 @@ export default function UserPage() {
                                         <label htmlFor="phoneNumber" className={styles.formLabel}>
                                             Номер телефона*
                                         </label>
-                                        {user.name === '' ? (
+                                        {!user.phoneNumber ? (
                                             <input
                                                 type="tel"
                                                 id="phoneNumber"

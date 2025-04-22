@@ -14,11 +14,7 @@ body {
   text-align: center;
   font-size: 12pt;
   line-height: 2;
-}
-
-button {
-  border-radius: 4pt;
-  border-color: green;
+  background-color: white;
 }
 
 .container {

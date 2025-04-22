@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { getUsers, editUser } from '../lib/api';
+import { getUsers } from '../lib/api';
 import { User } from '../lib/types';
 import styles from '../styles/users.module.css';
 import Head from "next/head";

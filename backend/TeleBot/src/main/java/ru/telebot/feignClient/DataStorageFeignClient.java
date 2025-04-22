@@ -1,21 +1,14 @@
-package ru.telebot.FeignClient;
+package ru.telebot.feignClient;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import ru.telebot.dto.PhoneDto;
-import ru.telebot.dto.UserDto;
+import ru.library.dto.UserDto;
 
 import java.util.List;
 
-@FeignClient(name = "dataStorage", url = "${dataStorage.url}")
+@FeignClient(name = "dataStorage", url = "${serviceUrl.dataStorage}")
 public interface DataStorageFeignClient {
-    @PostMapping("/storage/phones/addNew")
-    void addNewPhone(@RequestBody PhoneDto phone);
-    @GetMapping("/storage/phones/getAll")
-    List<PhoneDto> getPhones();
-
     @GetMapping("/storage/users/getAll")
     List<UserDto> getUsers();
     @PostMapping("/storage/users/addNew")

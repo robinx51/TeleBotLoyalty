@@ -4,6 +4,10 @@ server:
 spring:
   profiles:
     active: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/iMarket
+    username: postgres
+    password: 123
   liquibase:
     change-log: db/changelog/changelog.xml
     url: ${spring.datasource.url}

@@ -5,6 +5,8 @@ import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
@@ -17,15 +19,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.library.dto.User1CRequestDto;
 import ru.telebot.bot.TelegramBot;
 import ru.telebot.dto.UpdateUserDto;
 import ru.telebot.enums.ButtonText;
 import ru.telebot.enums.CallbackData;
-import ru.telebot.dto.PhoneDto;
-import ru.telebot.dto.UserDto;
+import ru.library.dto.PhoneDto;
+import ru.library.dto.UserDto;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static ru.telebot.enums.ButtonText.*;
 import static ru.telebot.enums.CallbackData.*;
@@ -38,15 +40,17 @@ public class UpdateService {
     /// TODO обработка после выбора типа
     private TelegramBot bot;
     private final DataStorageService dataStorageService;
+    private final OneCService oneCService;
+
     @Value("@${bot.channelName}")
     private String channelName;
-    private List<PhoneDto> phones;
+    private Map<String, List<PhoneDto>> phones;
     private Map<Long, UserDto> users;
     private Map<Integer, Long> usersIdByCode;
 
     public void registerBot(TelegramBot bot) {
         this.bot = bot;
-        initLists();
+        initUsers();
     }
     public List<UserDto> getUsers() {
         log.debug("Запрос списка пользователей");
@@ -56,14 +60,26 @@ public class UpdateService {
         log.debug("Запрос пользователя с кодом: {}", code);
         return users.get(usersIdByCode.get(code));
     }
-    public void updateUser(UpdateUserDto update) {
+    public boolean updateUser(UpdateUserDto update) {
         log.debug("Обновление данных пользователя с кодом: {}", update.getCode());
         UserDto user = users.get(update.getTelegramId());
+        if (user.getName() == null) {
+            User1CRequestDto user1CRequestDto = User1CRequestDto.builder()
+                    .fullName(update.getName())
+                    .phone(update.getPhoneNumber())
+                    .username(user.getUsername())
+                    .build();
+            if (!oneCService.addUser(user1CRequestDto))
+                return false;
+
+        }
         user.setName(update.getName());
         user.setPhoneNumber(update.getPhoneNumber());
         user.setCashback(calculateCashback(user.getCashback(), update));
+
         dataStorageService.updateUser(user);
         bot.sendMessage(getResponsePage(user));
+        return true;
     }
 
     // Handlers
@@ -198,7 +214,7 @@ public class UpdateService {
                     editMessage.setReplyMarkup(page.getReplyMarkup());
                 }
                 case NEW_PAGE, USED_PAGE -> {
-                    EditMessageText phonesPage = getPhonesPage(callbackQuery.getData());
+                    EditMessageText phonesPage = getPhonesPage(callbackQuery.getData(), lastPage.get().toString());
                     editMessage.setText(phonesPage.getText());
                     editMessage.setReplyMarkup(phonesPage.getReplyMarkup());
                 }
@@ -216,32 +232,21 @@ public class UpdateService {
     private EditMessageText handleInteger(String[] pages, CallbackQuery callbackQuery) {
         EditMessageText message = new EditMessageText();
         String model = pages[3];
+        String condition = pages[2];
         String text = CHOICE_TEXT + model;
         switch (pages.length) {
             // Выбрано поколение
             case 4 -> {
                 text += TYPE_TEXT.toString();
                 message.setText(text);
-                message.setReplyMarkup(getModelsKeyboard(model, callbackQuery.getData()));
+                message.setReplyMarkup(getModelsKeyboard(model, callbackQuery.getData(), condition));
             }
             // Выбран Pro/Pro Max и т.д.
             case 5 -> {
                 String type = pages[4];
-                text += " " + type + MEMORY_TEXT;
-                message.setText(text + type);
+                //text += " " + type + MEMORY_TEXT;
+                //message.setText(text + type);
                 //message.setReplyMarkup(getMemoryKeyboard(model, callbackQuery.getData()));
-            }
-            // Выбрана память
-            case 6 -> {
-                String type = pages[4];
-                String memory = pages[5];
-                message.setText(text + type + memory);
-//                message.setReplyMarkup();
-//                if (Objects.equals(pages[pages.length - 2], USED_PAGE.toString())) {
-//
-//                } else if (Objects.equals(pages[pages.length - 2], NEW_PAGE.toString())) {
-//
-//                }
             }
         }
         return message;
@@ -272,21 +277,21 @@ public class UpdateService {
         replyKeyboardMarkup.setKeyboard(rows);
         return replyKeyboardMarkup;
     }
-    private InlineKeyboardMarkup getPhonesKeyboard(String pageHistory) {
-        List<String> models = phones.stream()
+    private InlineKeyboardMarkup getPhonesKeyboard(String pageHistory, String condition) {
+        List<String> models = phones.get(condition).stream()
                 .map(PhoneDto::getModel)
+                .distinct()
+                .sorted(Comparator.reverseOrder())
                 .toList();
         return getGridKeyboard(PHONE_BUTTON.toString(), models, pageHistory);
     }
-    private InlineKeyboardMarkup getModelsKeyboard(String generation, String callbackData) {
-        PhoneDto phone = getPhoneByModel(generation);
+    private InlineKeyboardMarkup getModelsKeyboard(String generation, String callbackData, String condition) {
+        List<String> typesByModel = getTypesByModel(generation, condition);
         InlineKeyboardMarkup keyboardMarkup = null;
 
-        if (phone != null && !phone.getType().isEmpty()) {
-            List<String> types = phone.getType();
+        if (!typesByModel.isEmpty()) {
             String prefix = PHONE_BUTTON + generation + " ";
-            keyboardMarkup = getGridKeyboard(prefix, types, callbackData);
-
+            keyboardMarkup = getGridKeyboard(prefix, typesByModel, callbackData);
         }
         return keyboardMarkup;
     }
@@ -373,8 +378,8 @@ public class UpdateService {
                 .replyMarkup(inlineKeyboardMarkup)
                 .build();
     }
-    private EditMessageText getPhonesPage(String pageHistory) {
-        InlineKeyboardMarkup keyboardMarkup = getPhonesKeyboard(pageHistory);
+    private EditMessageText getPhonesPage(String pageHistory, String condition) {
+        InlineKeyboardMarkup keyboardMarkup = getPhonesKeyboard(pageHistory, condition);
         return EditMessageText.builder()
                 .text(MODEL_TEXT.toString())
                 .replyMarkup(keyboardMarkup)
@@ -388,25 +393,31 @@ public class UpdateService {
     }
 
     // Functions
-    private void initLists() {
-        List<PhoneDto> phoneList = new ArrayList<>();
+    @Async
+    @Scheduled(initialDelay = 2000, fixedDelayString = "${interval.phones}") // Раз в сутки
+    public void updatePhones() throws InterruptedException {
+        Map<String, List<PhoneDto>> phoneMap = new HashMap<>();
+        try {
+            phoneMap = oneCService.getPhones();
+            log.info("Список телефонов обновлён");
+        } catch (RetryableException e) {
+            log.error("Ошибка запроса к 1С - список телефонов не обновлён");
+            Thread.sleep(60 * 1000); // Через минуту повторить
+            updatePhones();
+        }
+        if (!phoneMap.isEmpty()){
+            phones = phoneMap;
+        }
+    }
+    private void initUsers() {
         List<UserDto> userList = new ArrayList<>();
         users = new HashMap<>();
         usersIdByCode = new HashMap<>();
         try {
-            phoneList = dataStorageService.getPhones();
             userList = dataStorageService.getUsers();
             log.debug("Запрос к сервису БД выполнен");
         } catch (RetryableException e) {
             log.error("Ошибка запроса к сервису БД");
-        }
-        if (!phoneList.isEmpty()){
-            Comparator<PhoneDto> compareByReleaseYear = Comparator
-                    .comparing(PhoneDto::getReleaseYear);
-            phones = phoneList.stream()
-                    .sorted(compareByReleaseYear.reversed())
-                    .collect(Collectors.toList());
-            log.debug("Список телефонов отсортирован");
         }
         if (!userList.isEmpty()) {
             for (UserDto user : userList) {
@@ -474,11 +485,13 @@ public class UpdateService {
             return false;
         }
     }
-    private PhoneDto getPhoneByModel(String model) {
-        return phones.stream()
+    private List<String> getTypesByModel(String model, String condition) {
+        return phones.get(condition).stream()
                 .filter(phoneDto -> model.equals(phoneDto.getModel()))
-                .findAny()
-                .orElse(null);
+                .map(PhoneDto::getType)
+                .distinct()
+                .sorted(Comparator.reverseOrder())
+                .toList();
     }
     private int calculateCashback(int cashback, UpdateUserDto update) {
         int newCashback = cashback;
@@ -512,15 +525,5 @@ public class UpdateService {
                 .entities(entities)
                 .linkPreviewOptions(options)
                 .build();
-    }
-    public boolean editUser(UserDto user) {
-        if (!usersIdByCode.containsKey(user.getCode()))
-            return false;
-        try {
-            dataStorageService.updateUser(user);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

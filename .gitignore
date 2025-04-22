@@ -75,3 +75,4 @@ yarn-error.log*
 next-env.d.ts
 /backend/TeleBot/src/main/resources/application-dev.yaml
 /backend/DataStorage/src/main/resources/application-dev.yaml
+/backend/OneC/src/main/resources/application-dev.yaml

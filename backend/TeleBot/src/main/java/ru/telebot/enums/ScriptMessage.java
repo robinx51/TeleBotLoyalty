@@ -12,7 +12,7 @@ public enum ScriptMessage {
     SUB_CASHBACK_RESPONSE("Чтобы списать баллы, назовите этот код мененджеру: "),
     PHONES_TEXT("Выберите тип товара:ㅤㅤㅤㅤ"),
     MODEL_TEXT("Выберите поколение:ㅤㅤㅤㅤㅤ"),
-    TYPE_TEXT("\nВыберите тип:ㅤㅤㅤㅤㅤ"),
+    TYPE_TEXT("\nВыберите тип смартфона:ㅤㅤㅤㅤㅤ"),
     MEMORY_TEXT("Укажите количество памяти:"),
     CHOICE_TEXT("iPhone "),
     RESPONSE_TEXT("Общий баланс: "); // Сообщение после операции

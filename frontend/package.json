@@ -2,9 +2,9 @@
   "name": "nextjs-course-2",
   "version": "1.0.0",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 9090",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 9090",
     "lint": "next lint"
   },
   "dependencies": {

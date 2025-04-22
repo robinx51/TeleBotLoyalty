@@ -1,0 +1,23 @@
+server:
+  port: 9094
+
+serviceUrl:
+  1c:
+    ping: /${1c.url.publication}/hs/tgBot/ping
+    getPhones: /${1c.url.publication}/hs/tgBot/getPhones
+    addUser: /${1c.url.publication}/hs/tgBot/addCustomer
+
+spring:
+  profiles:
+    active: dev
+  cloud:
+    inetutils:
+      preferred-networks: 127.0.0.1
+      timeout-seconds: 1
+
+logging:
+  level:
+    ru.onec: DEBUG
+  file:
+    name: ./backend/TeleBot/logs/app.log
+    path: logs

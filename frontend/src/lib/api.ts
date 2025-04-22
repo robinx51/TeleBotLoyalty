@@ -28,7 +28,7 @@ export async function getUserByCode(code: string | string[]): Promise<User> {
     }
 }
 
-export async function updateUser(data: UpdateUserRequest): Promise<void> {
+export async function updateUser(data: UpdateUserRequest): Promise<boolean> {
     try {
         return await axios.post(`/api/bot/users/update`, data)
     } catch (err) {
@@ -36,13 +36,4 @@ export async function updateUser(data: UpdateUserRequest): Promise<void> {
         throw err;
     }
 
-}
-
-export async function editUser(data: User): Promise<boolean> {
-    try {
-        return await axios.post(`/api/bot/users/editUser`, data);
-    } catch (err) {
-        console.error('Error updating user');
-        throw err;
-    }
 }
