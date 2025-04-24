@@ -1,0 +1,104 @@
+
+services:
+  db:
+    container_name: db-iMarket
+    image: postgres:14.7-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: iMarket
+    volumes:
+      - ./infrastructure/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - smart-store-network
+
+  pgadmin:
+    container_name: pgadmin4
+    image: dpage/pgadmin4:7
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_LISTEN_PORT: 80
+    depends_on:
+      - db
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - smart-store-network
+
+  DataStorage-image:
+    container_name: ms-DataStorage
+    build:
+      context: backend/DataStorage
+      dockerfile: Dockerfile
+    image: datastorage-image:latest
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - smart-store-network
+    environment:
+      - SERVER_PORT=9092
+      - SPRING_PROFILES_ACTIVE=prod
+
+  OneC-image:
+    container_name: ms-OneC
+    build:
+      context: backend/OneC
+      dockerfile: Dockerfile
+    image: onec-image:latest
+    restart: always
+    networks:
+      - smart-store-network
+    environment:
+      - SERVER_PORT=9094
+      - 1C_URL_BASE=http://host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  TeleBot-image:
+    container_name: ms-TeleBot
+    build:
+      context: backend/TeleBot
+      dockerfile: Dockerfile
+    image: telebot-image:latest
+    restart: always
+    depends_on:
+      - OneC-image
+      - DataStorage-image
+    networks:
+      - smart-store-network
+    environment:
+      - SERVER_PORT=9093
+      - SERVICEURL_DATASTORAGE=http://ms-DataStorage:9092
+      - SERVICEURL_ONEC=http://ms-OneC:9094
+      - SERVICEURL_FRONTEND=http://frontend:9090
+
+  frontend-image:
+    container_name: frontend
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    image: frontend-image:latest
+    restart: always
+    ports:
+      - "9090:9090"
+    environment:
+      - BACKEND_URL=http://ms-TeleBot:9093
+    depends_on:
+      - TeleBot-image
+    networks:
+      - smart-store-network
+
+networks:
+  smart-store-network:
+    driver: bridge
+
+volumes:
+  db-data:
+  pgadmin-data:

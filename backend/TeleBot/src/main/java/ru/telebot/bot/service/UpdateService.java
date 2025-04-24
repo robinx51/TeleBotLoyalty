@@ -1,5 +1,6 @@
 package ru.telebot.bot.service;
 
+import feign.FeignException;
 import feign.RetryableException;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +27,12 @@ import ru.telebot.enums.ButtonText;
 import ru.telebot.enums.CallbackData;
 import ru.library.dto.PhoneDto;
 import ru.library.dto.UserDto;
+import ru.telebot.enums.ScriptMessage;
 
 import java.util.*;
 
 import static ru.telebot.enums.ButtonText.*;
+import static ru.telebot.enums.ButtonText.CASHBACK_RULES;
 import static ru.telebot.enums.CallbackData.*;
 import static ru.telebot.enums.ScriptMessage.*;
 
@@ -102,8 +105,14 @@ public class UpdateService {
             log.debug("Получен callback: {}", update.getCallbackQuery().getData());
             handleCallbackQuery(update.getCallbackQuery());
         }
-        else
-            log.warn("Необработанный запрос: {}", update);
+        else {
+            log.info("Необработанный запрос: {}", update);
+            SendMessage sendMessage = SendMessage.builder()
+                    .chatId(update.getMessage().getChatId())
+                    .text(String.valueOf(UNKNOWN_COMMAND))
+                    .build();
+            bot.sendMessage(sendMessage);
+        }
     }
     private void handleText(Update update) {
         SendMessage message = SendMessage.builder()
@@ -126,7 +135,7 @@ public class UpdateService {
                     message.setText(availabilityPage.getText());
                     message.setReplyMarkup(availabilityPage.getReplyMarkup());
                 }
-                case CASHBACK_RULES -> message.setText("Здесь будут правила кэшбека");
+                case CASHBACK_RULES -> message.setText(ScriptMessage.CASHBACK_RULES.toString());
                 default -> {
                     log.warn("Необработанный текст: {}", text.get());
                     message.setText("Неизвестная команда, попробуйте ещё раз");
@@ -148,7 +157,11 @@ public class UpdateService {
                         newUser(user);
                 }
             } case "/help" -> {
-
+                SendMessage sendMessage = SendMessage.builder()
+                        .chatId(message.getChatId())
+                        .text(String.valueOf(SUBSCRIBED_START))
+                        .build();
+                bot.sendMessage(sendMessage);
             } default -> {
                 SendMessage sendMessage = SendMessage.builder()
                         .chatId(message.getChatId())
@@ -251,12 +264,12 @@ public class UpdateService {
     }
     private EditMessageText handleType(String[] pages, CallbackQuery callbackQuery) {
         EditMessageText message = new EditMessageText();
-        String condition = pages[2], model = pages[3], type = pages[4];
+        String condition = pages[2], model = pages[3], type = (pages[4].equals("common") ? "" : pages[4]);
 
         List<PhoneDto> phonesByType = getPhonesByType(condition, model,  type);
         StringBuilder text = new StringBuilder()
                 .append(CHOICE_TEXT)
-                .append(model).append(" ")
+                .append(model).append(type.isEmpty() ? "" : " ")
                 .append(type);
 
         notificationToManager(text.toString(), callbackQuery.getFrom().getUserName());
@@ -315,7 +328,8 @@ public class UpdateService {
                 .text(CHANNEL_LINK.toString())
                 .build();
         row.add(buttonLink);
-        row.add(getInlineKeyboardButton(SUBSCRIBED.toString(), ACTION + START_SUBSCRIBED.toString()));
+
+        row.add(getInlineKeyboardButton(SUBSCRIBED.toString(), ACTION + "_" + START_SUBSCRIBED));
 
         markup.setKeyboard(List.of(row));
         return markup;
@@ -441,6 +455,8 @@ public class UpdateService {
             log.error("Ошибка запроса к 1С - список телефонов не обновлён");
             Thread.sleep(60 * 1000); // Через минуту повторить
             updatePhones();
+        } catch (FeignException e) {
+            log.error("Ошибка запроса к 1С: {}", e.getMessage());
         }
         if (!phoneMap.isEmpty()){
             phones = phoneMap;
@@ -451,10 +467,14 @@ public class UpdateService {
         users = new HashMap<>();
         usersIdByCode = new HashMap<>();
         try {
+            log.debug("Включение задержки 5 сек");
+            Thread.sleep(5000);
             userList = dataStorageService.getUsers();
             log.debug("Запрос к сервису БД выполнен");
         } catch (RetryableException e) {
             log.error("Ошибка запроса к сервису БД");
+        } catch (Exception e) {
+            log.error("Неизвестная ошибка: {}", e.getMessage());
         }
         if (!userList.isEmpty()) {
             for (UserDto user : userList) {

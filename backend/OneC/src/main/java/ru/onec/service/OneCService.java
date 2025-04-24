@@ -24,7 +24,13 @@ public class OneCService {
     }
 
     public Map<String, List<PhoneDto>> getPhonesFrom1C() {
-        PhoneResponseDto response = feignClient.getPhones();
+        PhoneResponseDto response;
+        try {
+            response = feignClient.getPhones();
+        } catch (Exception e) {
+            log.error("Ошибка при запросе к 1С {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
 
         if (!response.isSuccess()) {
             throw new RuntimeException("1C returned error: " + response.getError());

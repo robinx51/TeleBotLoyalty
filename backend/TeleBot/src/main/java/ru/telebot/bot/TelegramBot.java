@@ -46,7 +46,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         isBotRunning();
 
         SetMyCommands setMyCommands = SetMyCommands.builder()
-                .commands(List.of(new BotCommand("start", "Начало взаимодействия с ботом")))
+                .commands(List.of(new BotCommand("start", "Начало взаимодействия с ботом")
+                        , new BotCommand("help", "Информация о боте")))
                 .build();
         SetMyDescription setMyDescription = SetMyDescription.builder()
                 .description(String.valueOf(BOT_DESCRIPTION))

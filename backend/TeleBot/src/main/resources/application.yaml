@@ -8,8 +8,10 @@ serviceUrl:
 
 
 spring:
+  jackson:
+    time-zone: Europe/Moscow
   profiles:
-    active: dev
+    active: prod
   cloud:
     inetutils:
       preferred-networks: 127.0.0.1
@@ -19,8 +21,8 @@ logging:
   level:
     ru.telebot: DEBUG
   file:
-    name: ./backend/OneC/logs/app.log
+    name: ./backend/TeleBot/logs/app.log
     path: logs
 
 interval:
-  phones: PT24H
+  phones: PT4H

@@ -8,7 +8,7 @@ public enum CallbackData {
     USED_PAGE("used"),
     NEW_PAGE("new"),
     PAGE("page"),
-    ACTION("action_"),
+    ACTION("action"),
     COMMON_TYPE("common"),
     PRO_TYPE("Pro"),
     PRO_MAX_TYPE("Pro Max"),

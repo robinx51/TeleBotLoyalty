@@ -15,12 +15,15 @@ public class DataStorageService {
     private final UsersServiceDB usersServiceDB;
 
     public void addNewUser(User user) {
+        log.debug("Запрос к БД: addNewUser");
         usersServiceDB.addUser(user);
     }
     public List<User> getAllUsers() {
+        log.debug("Запрос к БД: getAllUsers");
         return usersServiceDB.getAll();
     }
     public void updateUser(User user) {
+        log.debug("Запрос к БД: updateUser");
         usersServiceDB.updateUser(user);
     }
 }

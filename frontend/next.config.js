@@ -5,10 +5,11 @@ module.exports = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:9093/:path*',
-
+        destination: `${process.env.BACKEND_URL}/:path*`,
       },
     ];
   },
-  devIndicators: false
+  env: {
+    BACKEND_URL: process.env.BACKEND_URL,
+  },
 };

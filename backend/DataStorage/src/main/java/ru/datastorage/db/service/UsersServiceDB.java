@@ -32,11 +32,6 @@ public class UsersServiceDB {
         usersRepository.save(user);
     }
 
-    public User getUserByCode(Integer code) {
-        return usersRepository.findById(code)
-                .orElseThrow(() -> new EntityNotFoundException("User c кодом: " + code + " не найден"));
-    }
-
     public List<User> getAll() {
         return usersRepository.findAll();
     }

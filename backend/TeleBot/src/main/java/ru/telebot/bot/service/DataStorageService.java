@@ -15,7 +15,7 @@ public class DataStorageService {
     private final DataStorageFeignClient dataStorageFeignClient;
 
     public List<UserDto> getUsers() {
-        log.debug("Получение списка айфонов из PG");
+        log.debug("Получение списка покупателей из PG");
         return dataStorageFeignClient.getUsers();
     }
 
