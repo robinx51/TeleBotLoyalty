@@ -2,8 +2,10 @@ server:
   port: 9092
 
 spring:
+  jackson:
+    time-zone: Europe/Moscow
   profiles:
-    active: dev
+    active: prod
   liquibase:
     change-log: db/changelog/changelog.xml
     url: ${spring.datasource.url}

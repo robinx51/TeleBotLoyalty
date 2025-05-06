@@ -3,17 +3,21 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="create_table_phones" author="robinx51">
-        <createTable tableName="phones">
-            <column name="model" type="varchar(255)">
-                <constraints primaryKey="true" primaryKeyName="pk_client" nullable="false"/>
+    <changeSet id="create_tables" author="robinx51">
+        <createTable tableName="users">
+            <column name="code" type="integer">
+                <constraints primaryKey="true" primaryKeyName="pk_user" nullable="false"/>
             </column>
 
-            <column name="release_year" type="integer"/>
+            <column name="telegram_id" type="bigint"/>
 
-            <column name="type" type="jsonb"/>
+            <column name="username" type="varchar"/>
 
-            <column name="memory" type="jsonb"/>
+            <column name="name" type="varchar"/>
+
+            <column name="phone_number" type="varchar"/>
+
+            <column name="cashback" type="real"/>
         </createTable>
     </changeSet>
 </databaseChangeLog>

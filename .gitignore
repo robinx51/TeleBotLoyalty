@@ -33,8 +33,6 @@ build/
 ### VS Code ###
 .vscode/
 /src/main/resources/application-dev.yaml
-/DataStorage/src/main/resources/application-dev.yaml
-/TeleBot/src/main/resources/application-dev.yaml
 
 # dependencies
 /node_modules
@@ -66,12 +64,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/backend/TeleBot/src/main/resources/application-dev.yaml
+/backend/DataStorage/src/main/resources/application-dev.yaml
+/backend/OneC/src/main/resources/application-dev.yaml
+/backend/TeleBot/src/main/resources/application-prod.yaml
+/backend/OneC/src/main/resources/application-prod.yaml
+/backend/DataStorage/src/main/resources/application-prod.yaml
