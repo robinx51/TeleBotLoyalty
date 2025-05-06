@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from "next/head";
-import styles from '../styles/index.module.css';
+import styles from '../../styles/index.module.css';
 
 export default function HomePage() {
     const [code, setCode] = useState('');
@@ -18,11 +18,11 @@ export default function HomePage() {
         }
 
         // Перенаправляем на страницу пользователя
-        router.push(`/user/${code}`);
+        router.push(`/admin/user/${code}`);
     };
 
     const navigateToUsersTable = () => {
-        router.push('/users');
+        router.push('/admin/users');
     };
 
     return (

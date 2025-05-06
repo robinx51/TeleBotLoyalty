@@ -57,9 +57,6 @@ services:
       - smart-store-network
     environment:
       - SERVER_PORT=9094
-      - 1C_URL_BASE=http://host.docker.internal:8080
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   TeleBot-image:
     container_name: ms-TeleBot

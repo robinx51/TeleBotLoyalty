@@ -5,7 +5,7 @@ spring:
   jackson:
     time-zone: Europe/Moscow
   profiles:
-    active: prod
+    active: dev
   liquibase:
     change-log: db/changelog/changelog.xml
     url: ${spring.datasource.url}

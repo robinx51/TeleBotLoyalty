@@ -1,5 +1,6 @@
 package ru.onec.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OneCService {
     private final OneCFeignClient feignClient;
+
+    @PostConstruct
+    private void init() {
+        if (pingOneC())
+            log.info("1C server is available");
+        else
+            log.error("1C server not available");
+    }
 
     public boolean pingOneC() {
         return feignClient.ping().equals("Working");

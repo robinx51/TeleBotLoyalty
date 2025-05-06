@@ -473,6 +473,7 @@ public class UpdateService {
             log.debug("Запрос к сервису БД выполнен");
         } catch (RetryableException e) {
             log.error("Ошибка запроса к сервису БД");
+            initUsers();
         } catch (Exception e) {
             log.error("Неизвестная ошибка: {}", e.getMessage());
         }

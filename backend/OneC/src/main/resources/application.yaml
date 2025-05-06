@@ -11,7 +11,7 @@ spring:
   jackson:
     time-zone: Europe/Moscow
   profiles:
-    active: prod
+    active: dev
   cloud:
     inetutils:
       preferred-networks: 127.0.0.1
