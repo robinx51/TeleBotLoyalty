@@ -1,4 +1,4 @@
-package ru.telebot.bot.service;
+package ru.telebot.service;
 
 import feign.FeignException;
 import feign.RetryableException;

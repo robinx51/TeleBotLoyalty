@@ -5,6 +5,7 @@ import { User, UpdateUserRequest } from '../../../lib/types';
 import styles from '../../../styles/admin.[code].module.css';
 import Head from "next/head";
 import { AxiosError } from "axios";
+import withAuth from "../../../components/withAuth";
 
 export function getFormattedPhone(inputStr: string ): string {
     const input = inputStr === null ?  "" : inputStr.replace(/\D/g, '');
@@ -19,7 +20,7 @@ export function getFormattedPhone(inputStr: string ): string {
     return formattedInput;
 }
 
-export default function UserPage() {
+function UserPage() {
     const router = useRouter();
     const { code } = router.query;
     const [user, setUser] = useState<User | null>(null);
@@ -432,3 +433,6 @@ export default function UserPage() {
         </div>
     );
 }
+
+
+export default withAuth(UserPage);

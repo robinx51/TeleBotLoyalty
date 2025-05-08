@@ -6,21 +6,23 @@ import styles from '../../styles/users.module.css';
 import Head from "next/head";
 import { AxiosError } from "axios";
 import {getFormattedPhone} from "./user/[code]";
+import withAuth, {getAuth} from "../../components/withAuth";
 
-export default function UsersPage() {
+function UsersPage() {
     const router = useRouter();
     const [users, setUsers] = useState<User[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    //const [editingUser, setEditingUser] = useState<User | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [searchField, setSearchField] = useState<keyof User>('code');
     const usersPerPage = 5;
+    const [isAuth, setAuth] = useState<boolean>(false);
 
     useEffect(() => {
         fetchUsers();
+        setAuth(getAuth);
     }, []);
 
     useEffect(() => {
@@ -76,62 +78,6 @@ export default function UsersPage() {
         setCurrentPage(1);
     };
 
-    // const handleEditClick = (user: User) => {
-    //     setEditingUser({ ...user });
-    // };
-    //
-    // const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof User) => {
-    //     if (editingUser) {
-    //         setEditingUser({
-    //             ...editingUser,
-    //             [field]: e.target.value
-    //         });
-    //     }
-    // };
-    //
-    // // Обработчик изменения телефонного номера
-    // const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     setEditingUser({
-    //         ...editingUser,
-    //         phoneNumber: getFormattedPhone(e)
-    //     });
-    // };
-    //
-    // const handleSaveClick = async () => {
-    //     if (editingUser) {
-    //         setLoading(true);
-    //         try {
-    //             const success = await editUser(editingUser);
-    //             if (success) {
-    //                 setUsers(users.map(user =>
-    //                     user.code === editingUser.code ? editingUser : user
-    //                 ));
-    //                 setEditingUser(null);
-    //             } else {
-    //                 setError('Не удалось обновить пользователя');
-    //             }
-    //         } catch (err) {
-    //             setError('Ошибка при обновлении пользователя');
-    //             console.error(err);
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     }
-    // };
-    //
-    // const handleCancelClick = () => {
-    //     setEditingUser(null);
-    // };
-    // const formatPhoneNumber = (phone: string) => {
-    //     if (!phone) return '';
-    //     const cleaned = ('' + phone).replace(/\D/g, '');
-    //     const match = cleaned.match(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/);
-    //     if (match) {
-    //         return `+${match[1]} (${match[2]}) ${match[3]}-${match[4]}-${match[5]}`;
-    //     }
-    //     return phone;
-    // };
-
     // Navigation functions
     const navigateToHome = () => {
         router.push('/admin');
@@ -156,6 +102,7 @@ export default function UsersPage() {
                 <meta name="description" content="Таблица пользователей" />
                 <link rel="icon" href="/favicon.png" />
             </Head>
+            { isAuth ?
             <div className={styles.pageContainer}>
                 <div className={styles.header}>
                     <button
@@ -229,32 +176,6 @@ export default function UsersPage() {
                                             <td className={styles.td}>
                                                 {user.cashback}
                                             </td>
-                                            {/*<td className={styles.td}>*/}
-                                            {/*    {editingUser?.code === user.code ? (*/}
-                                            {/*        <div className={styles.editButtons}>*/}
-                                            {/*            <button*/}
-                                            {/*                onClick={handleSaveClick}*/}
-                                            {/*                disabled={loading}*/}
-                                            {/*                className={`${styles.button} ${styles.saveButton}`}*/}
-                                            {/*            >*/}
-                                            {/*                Сохранить*/}
-                                            {/*            </button>*/}
-                                            {/*            <button*/}
-                                            {/*                onClick={handleCancelClick}*/}
-                                            {/*                className={`${styles.button} ${styles.cancelButton}`}*/}
-                                            {/*            >*/}
-                                            {/*                Отмена*/}
-                                            {/*            </button>*/}
-                                            {/*        </div>*/}
-                                            {/*    ) : (*/}
-                                            {/*        <button*/}
-                                            {/*            onClick={() => handleEditClick(user)}*/}
-                                            {/*            className={`${styles.button} ${styles.editButton}`}*/}
-                                            {/*        >*/}
-                                            {/*            Редактировать*/}
-                                            {/*        </button>*/}
-                                            {/*    )}*/}
-                                            {/*</td>*/}
                                         </tr>
                                     ))
                                 ) : (
@@ -300,6 +221,8 @@ export default function UsersPage() {
                     </>
                 )}
             </div>
+            : <div/>
+            }
         </div>
     );
 }
@@ -313,3 +236,6 @@ function getFieldLabel(field: keyof User): string {
         default: return '';
     }
 }
+
+
+export default withAuth(UsersPage);

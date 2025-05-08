@@ -37,3 +37,16 @@ export async function updateUser(data: UpdateUserRequest): Promise<boolean> {
     }
 
 }
+
+export async function checkAuth(data: string): Promise<boolean> {
+    try {
+        return await axios.get('/api/admin/check-auth', {
+            headers: {
+                'Authorization': 'Basic ' + data
+            }
+        });
+    } catch (err) {
+        console.error('Error checking auth');
+        throw err;
+    }
+}

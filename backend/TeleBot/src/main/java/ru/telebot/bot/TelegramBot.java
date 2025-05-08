@@ -17,7 +17,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.telebot.bot.service.UpdateService;
+import ru.telebot.service.UpdateService;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;

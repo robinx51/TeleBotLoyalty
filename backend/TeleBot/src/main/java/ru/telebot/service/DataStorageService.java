@@ -1,4 +1,4 @@
-package ru.telebot.bot.service;
+package ru.telebot.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

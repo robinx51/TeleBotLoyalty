@@ -3,7 +3,7 @@ package ru.telebot.controller;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.telebot.bot.service.UpdateService;
+import ru.telebot.service.UpdateService;
 import ru.telebot.dto.UpdateUserDto;
 import ru.library.dto.UserDto;
 
