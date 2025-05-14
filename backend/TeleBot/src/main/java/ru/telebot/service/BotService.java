@@ -2,10 +2,14 @@ package ru.telebot.service;
 
 import feign.FeignException;
 import feign.RetryableException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,6 +24,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.yaml.snakeyaml.Yaml;
 import ru.library.dto.User1CRequestDto;
 import ru.telebot.bot.TelegramBot;
 import ru.telebot.dto.UpdateUserDto;
@@ -29,6 +34,10 @@ import ru.library.dto.PhoneDto;
 import ru.library.dto.UserDto;
 import ru.telebot.enums.ScriptMessage;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static ru.telebot.enums.ButtonText.*;
@@ -39,15 +48,31 @@ import static ru.telebot.enums.ScriptMessage.*;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class UpdateService {
+public class BotService {
     private TelegramBot bot;
     private final DataStorageService dataStorageService;
     private final OneCService oneCService;
+    private final AuthService authService;
 
     @Value("@${bot.channelName}")
     private String channelName;
     @Value("${bot.managerId}")
     private String managerId;
+
+    @Value("${bot.adminId}")
+    private String adminId;
+    @Value("${bot.loyaltyUrl}")
+    private String loyaltyUrl;
+    @Value("${admin.username}")
+    private String adminUsername;
+    @Value("${admin.password}")
+    private String adminPassword;
+
+    @Autowired
+    private ConfigurableEnvironment env;
+    @Value("${propsFile}")
+    private String configFilePath;
+
     private Map<String, List<PhoneDto>> phones;
     private Map<Long, UserDto> users;
     private Map<Integer, Long> usersIdByCode;
@@ -64,7 +89,14 @@ public class UpdateService {
         log.debug("Запрос пользователя с кодом: {}", code);
         return users.get(usersIdByCode.get(code));
     }
-    public boolean updateUser(UpdateUserDto update) {
+    public boolean updateUser(UpdateUserDto update, HttpServletRequest request) {
+        try {
+            if (authService.validate(request).getStatusCode().is4xxClientError()) {
+                return false;
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
         log.debug("Обновление данных пользователя с кодом: {}", update.getCode());
         UserDto user = users.get(update.getTelegramId());
         if (user.getName() == null) {
@@ -97,7 +129,6 @@ public class UpdateService {
                 handleCommand(update.getMessage());
             }
             else {
-                log.debug("Получен текст: {}", update.getMessage().getText());
                 handleText(update);
             }
         }
@@ -106,7 +137,7 @@ public class UpdateService {
             handleCallbackQuery(update.getCallbackQuery());
         }
         else {
-            log.info("Необработанный запрос: {}", update);
+            log.debug("Необработанный запрос: {}", update);
             SendMessage sendMessage = SendMessage.builder()
                     .chatId(update.getMessage().getChatId())
                     .text(String.valueOf(UNKNOWN_COMMAND))
@@ -120,29 +151,50 @@ public class UpdateService {
                 .text(" ")
                 .build();
         Optional<ButtonText> text = ButtonText.fromValue(update.getMessage().getText());
-        if (text.isPresent()){
+        Integer code = getCodeById(update.getMessage().getFrom().getId(), update.getMessage().getFrom());
+        if (text.isPresent()) {
             switch (text.get()) {
-                case ADD_CASHBACK -> {
-                    Integer code = getCodeById(update.getMessage().getFrom().getId(), update.getMessage().getFrom());
+                case ADD_CASHBACK ->
                     message.setText(ADD_CASHBACK_RESPONSE.toString() + code);
-                }
-                case SUB_CASHBACK -> {
-                    Integer code = getCodeById(update.getMessage().getFrom().getId(), update.getMessage().getFrom());
+                case SUB_CASHBACK ->
                     message.setText(SUB_CASHBACK_RESPONSE.toString() + code);
-                }
                 case AVAILABILITY -> {
                     EditMessageText availabilityPage = getAvailabilityPage();
                     message.setText(availabilityPage.getText());
                     message.setReplyMarkup(availabilityPage.getReplyMarkup());
                 }
+                case ADMIN -> {
+                    if (message.getChatId().equals(adminId)) {
+                        EditMessageText adminPage = getAdminPage();
+                        message.setText(adminPage.getText());
+                        message.setReplyMarkup(adminPage.getReplyMarkup());
+                    } else
+                        message.setText("Неизвестная команда, попробуйте ещё раз");
+                }
                 case CASHBACK_RULES -> message.setText(ScriptMessage.CASHBACK_RULES.toString());
                 default -> {
-                    log.warn("Необработанный текст: {}", text.get());
+                    log.debug("Необработанный текст: {}", text.get());
                     message.setText("Неизвестная команда, попробуйте ещё раз");
                 }
             }
-        } else
-            message.setText(UNKNOWN_COMMAND.toString());
+        } else {
+            if (update.getMessage().getReplyToMessage() != null) {
+                Message repliedMessage = update.getMessage().getReplyToMessage();
+                if (message.getChatId().equals(adminId)
+                        && repliedMessage.getFrom().getId().equals(bot.getBotId())
+                        && repliedMessage.getText().equals(CHANGE_DATA_TEXT.toString())) {
+                    if (updateAdminData(update.getMessage().getText())) {
+                        message.setText("Данные успешно обновлены");
+                    } else {
+                        message.setText("Данные не обновлены");
+                    }
+                } else {
+                    message.setText(String.valueOf(UNKNOWN_COMMAND));
+                }
+            } else {
+                message.setText(UNKNOWN_COMMAND.toString());
+            }
+        }
         bot.sendMessage(message);
     }
     private void handleCommand(Message message) {
@@ -152,7 +204,7 @@ public class UpdateService {
                 if (!isUserSubscribed(user.getId())) {
                     handleUnsubscribe(message);
                 } else {
-                    bot.sendMessage(getStartPage(message.getChatId()));
+                    bot.sendMessage(getStartPage(message.getChatId(), user.getId().toString().equals(adminId)));
                     if (!users.containsKey(user.getId()))
                         newUser(user);
                 }
@@ -219,7 +271,7 @@ public class UpdateService {
                                     editMessage.setText(String.valueOf(AFTER_SUBSCRIBE));
                                     newMessage = SendMessage.builder()
                                             .chatId(chatId)
-                                            .replyMarkup(getStartKeyboard())
+                                            .replyMarkup(getStartKeyboard(chatId.equals(adminId)))
                                             .text(String.valueOf(SUBSCRIBED_START))
                                             .build();
                                 } else {
@@ -237,6 +289,30 @@ public class UpdateService {
                                 editMessage.setText(phonesPage.getText());
                                 editMessage.setReplyMarkup(phonesPage.getReplyMarkup());
                             }
+                            case GET_PAGE -> {
+                                String text = "Логин: " + adminUsername + "\nПароль: " + adminPassword;
+                                InlineKeyboardMarkup keyboard = InlineKeyboardMarkup.builder()
+                                        .keyboard(List.of(getButtonBack(callbackQuery.getData())))
+                                        .build();
+                                editMessage.setText(text);
+                                editMessage.setReplyMarkup(keyboard);
+                            }
+                            case CHANGE_PAGE -> {
+                                String text = CHANGE_DATA_TEXT.toString();
+                                InlineKeyboardMarkup keyboard = InlineKeyboardMarkup.builder()
+                                        .keyboard(List.of(getButtonBack(callbackQuery.getData())))
+                                        .build();
+                                editMessage.setText(text);
+                                editMessage.setReplyMarkup(keyboard);
+                            }
+                            case ADMIN_PAGE -> {
+                                if (editMessage.getChatId().equals(adminId)) {
+                                    EditMessageText adminPage = getAdminPage();
+                                    editMessage.setText(adminPage.getText());
+                                    editMessage.setReplyMarkup(adminPage.getReplyMarkup());
+                                } else
+                                    editMessage.setText("Неизвестная команда, попробуйте ещё раз");
+                            }
                             default -> {
                                 log.warn("Необработанный callback: {}", lastPage);
                                 return;
@@ -245,14 +321,15 @@ public class UpdateService {
                     }
                 }
             }
+        } else {
+            log.warn("Необработанный callback: {}", callbackQuery.getData());
+            return;
         }
-
 
         bot.sendEditedMessage(editMessage);
         bot.sendMessage(newMessage);
         bot.sendCallbackAnswer(callbackQuery.getId());
     }
-
     private EditMessageText handleModel(String[] pages, CallbackQuery callbackQuery) {
         EditMessageText message = new EditMessageText();
         //page_phones_used_15_pro_256
@@ -334,13 +411,16 @@ public class UpdateService {
         markup.setKeyboard(List.of(row));
         return markup;
     }
-    private ReplyKeyboardMarkup getStartKeyboard() {
+    private ReplyKeyboardMarkup getStartKeyboard(boolean isAdmin) {
         ReplyKeyboardMarkup replyKeyboardMarkup = ReplyKeyboardMarkup.builder()
                 .resizeKeyboard(true)
                 .build();
         List<KeyboardRow> rows = new ArrayList<>();
         rows.add(setKeyboardRow(ADD_CASHBACK.toString(), SUB_CASHBACK.toString()));
         rows.add(setKeyboardRow(AVAILABILITY.toString(), CASHBACK_RULES.toString()));
+        if (isAdmin) {
+            rows.add(setAdminRow());
+        }
 
         replyKeyboardMarkup.setKeyboard(rows);
         return replyKeyboardMarkup;
@@ -383,6 +463,13 @@ public class UpdateService {
         keyboardRow.addAll(buttons);
         return keyboardRow;
     }
+    private KeyboardRow setAdminRow() {
+        List<String> buttons = new ArrayList<>();
+        buttons.add(ADMIN.toString());
+        KeyboardRow keyboardRow = new KeyboardRow();
+        keyboardRow.addAll(buttons);
+        return keyboardRow;
+    }
     private static InlineKeyboardButton getInlineKeyboardButton(String text, String callbackData) {
         return InlineKeyboardButton.builder()
                 .text(text)
@@ -409,11 +496,11 @@ public class UpdateService {
     }
 
     // Pages
-    private SendMessage getStartPage(Long chatId) {
+    private SendMessage getStartPage(Long chatId, boolean isAdmin) {
         return SendMessage.builder()
                 .chatId(chatId)
                 .text(String.valueOf(SUBSCRIBED_START))
-                .replyMarkup(getStartKeyboard())
+                .replyMarkup(getStartKeyboard(isAdmin))
                 .build();
     }
     private EditMessageText getAvailabilityPage() {
@@ -440,6 +527,21 @@ public class UpdateService {
         return SendMessage.builder()
                 .chatId(user.getTelegramId())
                 .text(RESPONSE_TEXT.toString() + user.getCashback())
+                .build();
+    }
+    private EditMessageText getAdminPage() {
+        String text = "Актуальная ссылка на сервис лояльности:\n" + loyaltyUrl +
+                "\n\nВыберите, что сделать с данными авторизации по кнопке ниже";
+        List<InlineKeyboardButton> buttons = new ArrayList<>();
+        String baseCallback = PAGE + "_" + ADMIN_PAGE;
+        buttons.add(getInlineKeyboardButton(GET_BUTTON.toString(), baseCallback + '_' + GET_PAGE));
+        buttons.add(getInlineKeyboardButton(CHANGE_BUTTON.toString(), baseCallback + '_' + CHANGE_PAGE));
+        InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
+                .keyboard(List.of(buttons))
+                .build();
+        return EditMessageText.builder()
+                .text(text)
+                .replyMarkup(inlineKeyboardMarkup)
                 .build();
     }
 
@@ -470,7 +572,7 @@ public class UpdateService {
             log.debug("Включение задержки 5 сек");
             Thread.sleep(5000);
             userList = dataStorageService.getUsers();
-            log.debug("Запрос к сервису БД выполнен");
+            log.info("Запрос к сервису БД выполнен");
         } catch (RetryableException e) {
             log.error("Ошибка запроса к сервису БД");
             initUsers();
@@ -570,5 +672,49 @@ public class UpdateService {
                 .text(text)
                 .build();
         bot.sendMessage(message);
+    }
+
+    private boolean updateAdminData(String text) {
+        if (text.contains("|")) {
+            String[] data = text.split("\\|");
+            String username = data[0];
+            String password = data[1];
+
+            try {
+                saveToYamlFile(username, password);
+                updateRuntimeConfig(username, password);
+                authService.dropTokens();
+            } catch (IOException e) {
+                log.error("Ошибка сохранения данных в файл конфигураций: {}", e.getMessage());
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+    private void updateRuntimeConfig(String username, String password) {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("admin.username", username);
+        properties.put("admin.password", password);
+
+        env.getPropertySources()
+                .addFirst(new MapPropertySource("dynamicProperties", properties));
+    }
+    private void saveToYamlFile(String username, String password) throws IOException {
+        // Читаем текущий YAML
+        Yaml yaml = new Yaml();
+        Map<String, Object> yamlMap = yaml.load(Files.newInputStream(Paths.get(configFilePath)));
+
+        // Обновляем значения
+        if (!yamlMap.containsKey("admin")) {
+            yamlMap.put("admin", new HashMap<>());
+        }
+        ((Map<String, Object>) yamlMap.get("admin")).put("username", username);
+        ((Map<String, Object>) yamlMap.get("admin")).put("password", password);
+
+        // Записываем обратно в файл
+        try (FileWriter writer = new FileWriter(configFilePath)) {
+            yaml.dump(yamlMap, writer);
+        }
     }
 }

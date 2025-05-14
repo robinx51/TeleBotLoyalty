@@ -45,6 +45,11 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Spring Boot actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
         <!-- Spring Boot starter web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

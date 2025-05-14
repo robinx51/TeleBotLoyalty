@@ -17,7 +17,8 @@ public enum ScriptMessage {
     TYPE_TEXT("\nВыберите тип смартфона:ㅤㅤㅤㅤㅤ"),
     MEMORY_TEXT("Укажите количество памяти:"),
     CHOICE_TEXT("iPhone "),
-    RESPONSE_TEXT("Общий баланс: "); // Сообщение после операции
+    RESPONSE_TEXT("Общий баланс: "), // Сообщение после операции
+    CHANGE_DATA_TEXT("Введите данные в формате 'логин|пароль', ответив на это сообщение");
     private final String value;
 
     ScriptMessage(String value) {

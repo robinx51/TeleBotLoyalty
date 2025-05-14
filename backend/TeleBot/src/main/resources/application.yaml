@@ -26,3 +26,5 @@ logging:
 
 interval:
   phones: PT4H
+
+propsFile: ./backend/TeleBot/src/main/resources/application-${spring.profiles.active}.yaml

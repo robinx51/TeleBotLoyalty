@@ -1,0 +1,11 @@
+bot:
+  name: ${TG_BOT_NAME:botName_bot}
+  token: ${TG_BOT_TOKEN:token}
+  channelName: channelName
+  managerId: managerId
+  adminId: adminId
+  loyaltyUrl: ссылка_на_домен
+
+admin:
+  username: username
+  password: password

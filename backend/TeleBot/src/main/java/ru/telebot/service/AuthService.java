@@ -18,12 +18,9 @@ import java.util.UUID;
 public class AuthService {
     @Value("${admin.username}")
     private String adminUsername;
-
     @Value("${admin.password}")
     private String adminPassword;
-
     private final List<UUID> tokens;
-
 
     public ResponseEntity<?> login(LoginRequest request, HttpServletResponse response) {
         try {
@@ -43,7 +40,6 @@ public class AuthService {
                     .body(Map.of("message", e.getMessage()));
         }
     }
-
     public ResponseEntity<?> logout(HttpServletResponse response, HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -61,7 +57,6 @@ public class AuthService {
         response.addCookie(cookie);
         return ResponseEntity.ok().build();
     }
-
     public ResponseEntity<?> validate(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -75,18 +70,20 @@ public class AuthService {
         return ResponseEntity.status(401).build();
     }
 
+    public void dropTokens() {
+        tokens.clear();
+    }
+
 
     private boolean isValidCredentials(LoginRequest request) {
         return request.getUsername().equals(adminUsername) &&
                 request.getPassword().equals(adminPassword);
     }
-
     private String generateToken() {
         String token = UUID.randomUUID().toString();
         tokens.add(UUID.fromString(token));
         return token;
     }
-
     private boolean validateToken(String token) {
         if (token != null && !token.isEmpty()) {
             return tokens.contains(UUID.fromString(token));

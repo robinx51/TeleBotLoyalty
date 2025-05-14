@@ -1,6 +1,7 @@
 package ru.telebot.bot;
 
 import jakarta.annotation.PostConstruct;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.telebot.service.UpdateService;
+import ru.telebot.service.BotService;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -33,16 +34,17 @@ public class TelegramBot extends TelegramLongPollingBot {
     private static final Logger logger = LoggerFactory.getLogger(TelegramBot.class);
     @Value("${bot.name}")
     private String botUsername;
-    private final UpdateService updateService;
+    private Long botId;
+    private final BotService botService;
 
-    public TelegramBot(@Value("${bot.token}") String token, UpdateService updateService) {
+    public TelegramBot(@Value("${bot.token}") String token, BotService botService) {
         super(token);
-        this.updateService = updateService;
+        this.botService = botService;
     }
 
     @PostConstruct
     public void init() {
-        updateService.registerBot(this);
+        botService.registerBot(this);
         isBotRunning();
 
         SetMyCommands setMyCommands = SetMyCommands.builder()
@@ -71,7 +73,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        executorServiceForUpdates.submit(() -> updateService.handleUpdate(update));
+        executorServiceForUpdates.submit(() -> botService.handleUpdate(update));
     }
 
     public void sendMessage(SendMessage message) {
@@ -100,9 +102,22 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             GetMe getMe = new GetMe();
             User botUser = execute(getMe);
-            logger.info("Бот работает, username: {}", botUser.getUserName());
+            botId = botUser.getId();
+            logger.info("Бот работает, username: {}, id: {}", botUser.getUserName(), botId);
         } catch (TelegramApiException e) {
             logger.error("Бот не работает: {}", e.getMessage());
+        }
+    }
+
+    public @NonNull Long getBotId() {
+        if (botId != null) {
+            return botId;
+        }
+        try {
+            GetMe getMe = new GetMe();
+            return execute(getMe).getId();
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
         }
     }
 }
