@@ -1,32 +1,20 @@
 import { useEffect } from 'react';
+import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/router';
-import { checkAuth } from "../lib/api";
+import { checkAuth } from "../lib/auth";
+
 
 export default function withAuth(Component) {
     return (props) => {
         const router = useRouter();
 
         useEffect(() => {
-            const handleAuth = async () => {
-                const auth = localStorage.getItem('SmartStoreLoyaltyAuth');
-                const basePage = 'admin';
-                if (!auth) {
-                    router.push(`/${basePage}/login`);
-                    return;
+            const response = checkAuth();
+            response.then(function (isAuth) {
+                if (!isAuth) {
+                    router.push('/admin/login');
                 }
-
-                try {
-                    const response = await checkAuth(auth);
-
-                    if (!response) {
-                        router.push(`/${basePage}/login`);
-                    }
-                } catch (error) {
-                    router.push(`/${basePage}/login`);
-                }
-            };
-
-            handleAuth();
+            })
         }, []);
 
         return <Component {...props} />;
@@ -34,6 +22,6 @@ export default function withAuth(Component) {
 }
 
 export function getAuth():boolean {
-    const auth = localStorage.getItem('SmartStoreLoyaltyAuth');
+    const auth = getCookie('SmartStoreIsAuth');
     return !!auth;
 }

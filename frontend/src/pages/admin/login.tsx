@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useRouter } from 'next/router';
-import { checkAuth } from '../../lib/api';
 import styles from "../../styles/users.module.css";
+import {login, logout} from "../../lib/auth";
+import Head from "next/head";
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -9,25 +10,34 @@ export default function Login() {
     const [error, setError] = useState('');
     const router = useRouter();
 
-    const handleLogin = async (e) => {
+    useEffect(() => {
+        logout();
+    }, []);
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        const data = btoa(`${username}:${password}`);
-        const basePage = 'admin';
+        setError('');
+
         try {
-            const response = await checkAuth(data);
+            const response = await login(username, password);
             if (response) {
-                localStorage.setItem('SmartStoreLoyaltyAuth', data);
-                router.push(`/${basePage}`);
+                router.push('/admin');
             } else {
-                alert('Invalid credentials');
+                setError('Неверные учетные данные');
             }
-        } catch (error) {
-            setError('Ошибка авторизации: сервер недоступен');
+        } catch (error: any) {
+            setError(error.message);
+            console.error('Login failed:', error);
         }
     };
 
     return (
         <div>
+            <Head>
+                <title>Авторизация</title>
+                <meta name="description" content="Авторизация" />
+                <link rel="icon" href="/favicon.png" />
+            </Head>
             {error && <div className={styles.errorMessage}>{error}</div>}
             <h1>Авторизация</h1>
             <form onSubmit={handleLogin}>

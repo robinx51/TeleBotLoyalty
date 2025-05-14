@@ -5,7 +5,7 @@ import { User, UpdateUserRequest } from '../../../lib/types';
 import styles from '../../../styles/admin.[code].module.css';
 import Head from "next/head";
 import { AxiosError } from "axios";
-import withAuth from "../../../components/withAuth";
+import withAuth, {getAuth} from '../../../components/withAuth'
 
 export function getFormattedPhone(inputStr: string ): string {
     const input = inputStr === null ?  "" : inputStr.replace(/\D/g, '');
@@ -36,6 +36,7 @@ function UserPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isAuth, setAuth] = useState<boolean>(false);
 
     // Расчетные значения
     const currentCashback = user?.cashback || 0;
@@ -68,6 +69,7 @@ function UserPage() {
             setLoading(false);
         };
 
+        setAuth(getAuth);
         fetchUserData();
     }, [code]);
 
@@ -231,7 +233,7 @@ function UserPage() {
                 <meta name="description" content="Новая операция" />
                 <link rel="icon" href="/favicon.png" />
             </Head>
-
+            { isAuth ?
             <main className={styles.main}>
                 <div className={styles.card}>
                     <h1 className={styles.title}>Новая операция</h1>
@@ -414,7 +416,7 @@ function UserPage() {
                         <div className={styles.buttons}>
                             <button
                                 type="button"
-                                onClick={() => router.push('/')}
+                                onClick={() => router.push('/admin')}
                                 className={styles.secondaryButton}
                             >
                                 Назад
@@ -430,6 +432,8 @@ function UserPage() {
                     </form>
                 </div>
             </main>
+            : <div/>
+            }
         </div>
     );
 }
