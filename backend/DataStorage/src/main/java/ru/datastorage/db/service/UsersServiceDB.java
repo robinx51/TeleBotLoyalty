@@ -4,7 +4,9 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.datastorage.db.entity.Admin;
 import ru.datastorage.db.entity.User;
+import ru.datastorage.db.repository.AdminRepository;
 import ru.datastorage.db.repository.UsersRepository;
 
 import java.util.List;
@@ -14,12 +16,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UsersServiceDB {
     private final UsersRepository usersRepository;
+    private final AdminRepository adminRepository;
 
     public void addUser(User user) {
         log.info("Добавление user {} в БД", user.getCode());
         usersRepository.save(user);
     }
-
     public void updateUser(User user) {
         log.info("Обновление user с кодом : {}", user.getCode());
         if (usersRepository.existsById(user.getCode())) {
@@ -31,8 +33,14 @@ public class UsersServiceDB {
         }
         usersRepository.save(user);
     }
-
     public List<User> getAll() {
         return usersRepository.findAll();
+    }
+
+    public Admin getAdmin() {
+        return adminRepository.findAll().getLast();
+    }
+    public void updateAdmin(Admin admin) {
+        adminRepository.save(admin);
     }
 }

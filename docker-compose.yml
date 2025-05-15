@@ -57,6 +57,7 @@ services:
       - smart-store-network
     environment:
       - SERVER_PORT=9094
+      - SPRING_PROFILES_ACTIVE=dev
 
   TeleBot-image:
     container_name: ms-TeleBot
@@ -75,6 +76,7 @@ services:
       - SERVICEURL_DATASTORAGE=http://ms-DataStorage:9092
       - SERVICEURL_ONEC=http://ms-OneC:9094
       - SERVICEURL_FRONTEND=http://frontend:9090
+      - SPRING_PROFILES_ACTIVE=dev
 
   frontend-image:
     container_name: frontend

@@ -4,7 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.telebot.dto.LoginRequest;
@@ -14,12 +14,10 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RefreshScope
 @RequiredArgsConstructor
-public class AuthService {
-    @Value("${admin.username}")
-    private String adminUsername;
-    @Value("${admin.password}")
-    private String adminPassword;
+public class AuthService { ///  TODO шифрование пароля и контейнеризация
+    private final DataStorageService dataStorageService;
     private final List<UUID> tokens;
 
     public ResponseEntity<?> login(LoginRequest request, HttpServletResponse response) {
@@ -74,10 +72,8 @@ public class AuthService {
         tokens.clear();
     }
 
-
-    private boolean isValidCredentials(LoginRequest request) {
-        return request.getUsername().equals(adminUsername) &&
-                request.getPassword().equals(adminPassword);
+    public boolean isValidCredentials(LoginRequest request) {
+        return dataStorageService.checkAdmin(request.getUsername(), request.getPassword());
     }
     private String generateToken() {
         String token = UUID.randomUUID().toString();

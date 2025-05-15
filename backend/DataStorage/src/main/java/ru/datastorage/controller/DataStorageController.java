@@ -26,4 +26,13 @@ public class DataStorageController {
     public void updateUser(@RequestBody User user) {
         dataStorageService.updateUser(user);
     }
+
+    @GetMapping("/admin/get")
+    public List<String> getAdmin(){
+        return dataStorageService.getAdmin();
+    }
+    @PostMapping("/admin/update")
+    public void updateAdmin(@RequestBody List<String> admin) {
+        dataStorageService.updateAdmin(admin);
+    }
 }

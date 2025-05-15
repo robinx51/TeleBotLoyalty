@@ -4,12 +4,14 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.library.dto.ColorDto;
 import ru.library.dto.PhoneDto;
 import ru.onec.dto.PhoneResponseDto;
 import ru.library.dto.User1CRequestDto;
 import ru.onec.dto.UserResponseDto;
 import ru.onec.feignClient.OneCFeignClient;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,12 +98,22 @@ public class OneCService {
             }
         }
 
+        List<ColorDto> colors = phoneItem.getColors();
+
+        for (ColorDto color : colors) {
+            List<String> stores = new ArrayList<>();
+            for (String store : color.getStores()) {
+                stores.add(store.replace("Склад ", ""));
+            }
+            color.setStores(stores);
+        }
+
         return PhoneDto.builder()
                 .model(model)
                 .type(type.isEmpty() ? "" : type)
                 .price(phoneItem.getPrice())
                 .fullName(processedPhone)
-                .color(phoneItem.getColors())
+                .color(colors)
                 .build();
     }
 }

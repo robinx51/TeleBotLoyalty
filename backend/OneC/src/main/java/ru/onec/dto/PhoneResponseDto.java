@@ -3,6 +3,7 @@ package ru.onec.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
+import ru.library.dto.ColorDto;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class PhoneResponseDto {
             private String phone;
             private int price;
             @JsonProperty("color")
-            private List<String> colors;
+            private List<ColorDto> colors;
         }
     }
 }

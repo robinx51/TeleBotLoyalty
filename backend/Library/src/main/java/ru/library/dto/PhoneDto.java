@@ -26,5 +26,5 @@ public class PhoneDto {
     private String fullName;
 
     @Schema(name = "color", example = "Black")
-    private List<String> color;
+    private List<ColorDto> color;
 }

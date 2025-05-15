@@ -5,7 +5,3 @@ bot:
   managerId: managerId
   adminId: adminId
   loyaltyUrl: ссылка_на_домен
-
-admin:
-  username: username
-  password: password

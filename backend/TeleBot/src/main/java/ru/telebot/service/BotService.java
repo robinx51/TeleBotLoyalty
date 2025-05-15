@@ -6,10 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.MapPropertySource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -24,7 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.yaml.snakeyaml.Yaml;
+import ru.library.dto.ColorDto;
 import ru.library.dto.User1CRequestDto;
 import ru.telebot.bot.TelegramBot;
 import ru.telebot.dto.UpdateUserDto;
@@ -34,10 +31,6 @@ import ru.library.dto.PhoneDto;
 import ru.library.dto.UserDto;
 import ru.telebot.enums.ScriptMessage;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static ru.telebot.enums.ButtonText.*;
@@ -63,15 +56,6 @@ public class BotService {
     private String adminId;
     @Value("${bot.loyaltyUrl}")
     private String loyaltyUrl;
-    @Value("${admin.username}")
-    private String adminUsername;
-    @Value("${admin.password}")
-    private String adminPassword;
-
-    @Autowired
-    private ConfigurableEnvironment env;
-    @Value("${propsFile}")
-    private String configFilePath;
 
     private Map<String, List<PhoneDto>> phones;
     private Map<Long, UserDto> users;
@@ -290,7 +274,7 @@ public class BotService {
                                 editMessage.setReplyMarkup(phonesPage.getReplyMarkup());
                             }
                             case GET_PAGE -> {
-                                String text = "Логин: " + adminUsername + "\nПароль: " + adminPassword;
+                                String text = dataStorageService.getAdminText();
                                 InlineKeyboardMarkup keyboard = InlineKeyboardMarkup.builder()
                                         .keyboard(List.of(getButtonBack(callbackQuery.getData())))
                                         .build();
@@ -353,16 +337,7 @@ public class BotService {
 
         text.append(" в наличии: \n\n");
 
-        List<String> fullNames = new ArrayList<>();
-        for (PhoneDto phone : phonesByType) {
-            for (String color : phone.getColor()) {
-                String fullName = phone.getFullName() + " " +
-                        color + " - " +
-                        phone.getPrice() + "р";
-                fullNames.add(fullName);
-            }
-        }
-        text.append(String.join("\n", fullNames));
+        text.append(String.join("\n", getPhonesNames(phonesByType)));
 
         message.setText(text.toString());
         message.setReplyMarkup(getFullNamesKeyboard(callbackQuery.getData()));
@@ -572,6 +547,7 @@ public class BotService {
             log.debug("Включение задержки 5 сек");
             Thread.sleep(5000);
             userList = dataStorageService.getUsers();
+            dataStorageService.getAdmin();
             log.info("Запрос к сервису БД выполнен");
         } catch (RetryableException e) {
             log.error("Ошибка запроса к сервису БД");
@@ -673,48 +649,31 @@ public class BotService {
                 .build();
         bot.sendMessage(message);
     }
+    private static List<String> getPhonesNames(List<PhoneDto> phonesByType) {
+        List<String> fullNames = new ArrayList<>();
+        for (PhoneDto phone : phonesByType) {
+            for (ColorDto colorDto : phone.getColor()) {
+                String colorName = colorDto.getName();
+                for (String store : colorDto.getStores()){
+                    String fullName = phone.getFullName() + " " +
+                            colorName + " - " +
+                            phone.getPrice() + "р " +
+                            store;
+                    fullNames.add(fullName);
+                }
+            }
+        }
+        return fullNames;
+    }
 
     private boolean updateAdminData(String text) {
         if (text.contains("|")) {
             String[] data = text.split("\\|");
-            String username = data[0];
-            String password = data[1];
 
-            try {
-                saveToYamlFile(username, password);
-                updateRuntimeConfig(username, password);
-                authService.dropTokens();
-            } catch (IOException e) {
-                log.error("Ошибка сохранения данных в файл конфигураций: {}", e.getMessage());
-                return false;
-            }
+            dataStorageService.updateAdmin(data[0], data[1]);
+            authService.dropTokens();
             return true;
         }
         return false;
-    }
-    private void updateRuntimeConfig(String username, String password) {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("admin.username", username);
-        properties.put("admin.password", password);
-
-        env.getPropertySources()
-                .addFirst(new MapPropertySource("dynamicProperties", properties));
-    }
-    private void saveToYamlFile(String username, String password) throws IOException {
-        // Читаем текущий YAML
-        Yaml yaml = new Yaml();
-        Map<String, Object> yamlMap = yaml.load(Files.newInputStream(Paths.get(configFilePath)));
-
-        // Обновляем значения
-        if (!yamlMap.containsKey("admin")) {
-            yamlMap.put("admin", new HashMap<>());
-        }
-        ((Map<String, Object>) yamlMap.get("admin")).put("username", username);
-        ((Map<String, Object>) yamlMap.get("admin")).put("password", password);
-
-        // Записываем обратно в файл
-        try (FileWriter writer = new FileWriter(configFilePath)) {
-            yaml.dump(yamlMap, writer);
-        }
     }
 }
