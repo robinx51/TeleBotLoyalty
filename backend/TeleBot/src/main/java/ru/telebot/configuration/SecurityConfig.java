@@ -1,5 +1,6 @@
 package ru.telebot.configuration;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,9 +16,12 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfig {
-    @Value("${serviceUrl.frontend}")
-    private String frontendUrl;
+    @Value("${bot.serverUrl}")
+    private String serverUrl;
+    @Value("${bot.loyaltyUrl}")
+    private String loyaltyUrl;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -26,7 +30,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/bot/**").permitAll() // Разрешаем все bot endpoints
+                        .requestMatchers("/bot/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
@@ -36,10 +40,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(frontendUrl));
+        config.setAllowedOrigins(List.of(
+                "http://localhost:9090",
+                "http://frontend:9090",
+                "http://frontend-image:9090",
+                serverUrl,
+                loyaltyUrl
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization"));
+        config.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

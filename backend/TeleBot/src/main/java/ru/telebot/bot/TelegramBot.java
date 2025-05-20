@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetMe;
@@ -38,12 +39,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotService botService;
 
     public TelegramBot(@Value("${bot.token}") String token, BotService botService) {
-        super(token);
+        super(getBotOptions(), token);
         this.botService = botService;
     }
 
     @PostConstruct
     public void init() {
+        System.setProperty("java.net.preferIPv4Stack", "true");
         botService.registerBot(this);
         isBotRunning();
 
@@ -119,5 +121,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static DefaultBotOptions getBotOptions() {
+        return new DefaultBotOptions();
     }
 }

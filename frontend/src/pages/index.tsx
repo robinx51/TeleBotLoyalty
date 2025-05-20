@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import { useRouter } from 'next/router';
 import Head from "next/head";
-import styles from '../../styles/index.module.css';
-import withAuth, {getAuth} from '../../components/withAuth'
+import styles from '../styles/index.module.css';
+import withAuth, {getAuth} from '../components/withAuth'
 
 function HomePage() {
     const [code, setCode] = useState('');
@@ -24,11 +24,11 @@ function HomePage() {
         }
 
         // Перенаправляем на страницу пользователя
-        router.push(`/admin/user/${code}`);
+        router.push(`/user/${code}`);
     };
 
     const navigateToUsersTable = () => {
-        router.push('/admin/users');
+        router.push('/users');
     };
 
     return (

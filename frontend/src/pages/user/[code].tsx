@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { getUserByCode, updateUser } from '../../../lib/api';
-import { User, UpdateUserRequest } from '../../../lib/types';
-import styles from '../../../styles/admin.[code].module.css';
+import { getUserByCode, updateUser } from '../../lib/api';
+import { User, UpdateUserRequest } from '../../lib/types';
+import styles from '../../styles/[code].module.css';
 import Head from "next/head";
 import { AxiosError } from "axios";
-import withAuth, {getAuth} from '../../../components/withAuth'
+import withAuth, {getAuth} from '../../components/withAuth'
 
 export function getFormattedPhone(inputStr: string ): string {
     const input = inputStr === null ?  "" : inputStr.replace(/\D/g, '');
@@ -416,7 +416,7 @@ function UserPage() {
                         <div className={styles.buttons}>
                             <button
                                 type="button"
-                                onClick={() => router.push('/admin')}
+                                onClick={() => router.push('/')}
                                 className={styles.secondaryButton}
                             >
                                 Назад

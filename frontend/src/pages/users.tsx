@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import {getUsers} from '../../lib/api';
-import { User } from '../../lib/types';
-import styles from '../../styles/users.module.css';
+import {getUsers} from '../lib/api';
+import { User } from '../lib/types';
+import styles from '../styles/users.module.css';
 import Head from "next/head";
 import { AxiosError } from "axios";
 import {getFormattedPhone} from "./user/[code]";
-import withAuth, {getAuth} from '../../components/withAuth'
+import withAuth, {getAuth} from '../components/withAuth'
 
 function UsersPage() {
     const router = useRouter();
@@ -80,11 +80,11 @@ function UsersPage() {
 
     // Navigation functions
     const navigateToHome = () => {
-        router.push('/admin');
+        router.push('/');
     };
 
     const navigateToUser = (code: number) => {
-        router.push(`/admin/user/${code}`);
+        router.push(`/user/${code}`);
     };
 
     // Pagination logic

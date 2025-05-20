@@ -4,6 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -16,9 +17,12 @@ import java.util.UUID;
 @Service
 @RefreshScope
 @RequiredArgsConstructor
-public class AuthService { ///  TODO шифрование пароля и контейнеризация
+public class AuthService {
     private final DataStorageService dataStorageService;
     private final List<UUID> tokens;
+
+    @Value("${spring.profiles.active}")
+    private String profile;
 
     public ResponseEntity<?> login(LoginRequest request, HttpServletResponse response) {
         try {
@@ -27,6 +31,7 @@ public class AuthService { ///  TODO шифрование пароля и кон
                 authCookie.setHttpOnly(true);
                 authCookie.setPath("/");
                 authCookie.setMaxAge(24 * 60 * 60); // 1 день
+                authCookie.setSecure(profile.equals("prod"));
                 response.addCookie(authCookie);
 
                 return ResponseEntity.ok().build();

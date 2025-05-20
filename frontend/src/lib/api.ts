@@ -45,7 +45,8 @@ export const checkLogin = async (username: string, password: string): Promise<bo
         const response = await axios.post('/api/auth/login', { username, password }, {
             withCredentials: true,
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'SameSite': 'None'
             }
         });
         return response.status === 200;

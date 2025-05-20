@@ -4,7 +4,6 @@ server:
 serviceUrl:
   dataStorage: http://localhost:9092
   oneC: http://localhost:9094
-  frontend: http://localhost:9090
 
 
 spring:
@@ -16,6 +15,11 @@ spring:
     inetutils:
       preferred-networks: 127.0.0.1
       timeout-seconds: 1
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  devtools:
+    livereload:
+      enabled: false
 
 logging:
   level:
@@ -26,5 +30,3 @@ logging:
 
 interval:
   phones: PT4H
-
-propsFile: ./backend/TeleBot/src/main/resources/application-${spring.profiles.active}.yaml

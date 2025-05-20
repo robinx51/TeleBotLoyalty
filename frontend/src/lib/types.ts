@@ -16,13 +16,3 @@ export interface UpdateUserRequest {
     action: 'earn' | 'spend';
     operationAmount: number;
 }
-
-export interface LoginRequest {
-    username: string;
-    password: string;
-}
-
-export interface AuthResponse {
-    authenticated: boolean;
-    username?: string;
-}

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import { useRouter } from 'next/router';
-import styles from "../../styles/index.module.css";
-import {login, logout} from "../../lib/auth";
+import styles from "../styles/index.module.css";
+import {login, logout} from "../lib/auth";
 import Head from "next/head";
 
 export default function Login() {
@@ -21,7 +21,7 @@ export default function Login() {
         try {
             const response = await login(username, password);
             if (response) {
-                router.push('/admin');
+                router.push('/');
             } else {
                 setError('Неверные учетные данные');
             }

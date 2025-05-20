@@ -667,8 +667,8 @@ public class BotService {
     }
 
     private boolean updateAdminData(String text) {
-        if (text.contains("|")) {
-            String[] data = text.split("\\|");
+        if (text.contains(":")) {
+            String[] data = text.split(":");
 
             dataStorageService.updateAdmin(data[0], data[1]);
             authService.dropTokens();

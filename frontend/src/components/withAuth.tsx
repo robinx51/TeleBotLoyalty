@@ -12,7 +12,7 @@ export default function withAuth(Component) {
             const response = checkAuth();
             response.then(function (isAuth) {
                 if (!isAuth) {
-                    router.push('/admin/login');
+                    router.push('/login');
                 }
             })
         }, []);
