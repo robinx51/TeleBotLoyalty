@@ -5,6 +5,7 @@ import { User, UpdateUserRequest } from '../../lib/types';
 import styles from '../../styles/[code].module.css';
 import Head from "next/head";
 import { AxiosError } from "axios";
+import withAuth, {getAuth} from '../../components/withAuth'
 
 export function getFormattedPhone(inputStr: string ): string {
     const input = inputStr === null ?  "" : inputStr.replace(/\D/g, '');
@@ -19,7 +20,7 @@ export function getFormattedPhone(inputStr: string ): string {
     return formattedInput;
 }
 
-export default function UserPage() {
+function UserPage() {
     const router = useRouter();
     const { code } = router.query;
     const [user, setUser] = useState<User | null>(null);
@@ -35,6 +36,7 @@ export default function UserPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isAuth, setAuth] = useState<boolean>(false);
 
     // Расчетные значения
     const currentCashback = user?.cashback || 0;
@@ -67,6 +69,7 @@ export default function UserPage() {
             setLoading(false);
         };
 
+        setAuth(getAuth);
         fetchUserData();
     }, [code]);
 
@@ -230,7 +233,7 @@ export default function UserPage() {
                 <meta name="description" content="Новая операция" />
                 <link rel="icon" href="/favicon.png" />
             </Head>
-
+            { isAuth ?
             <main className={styles.main}>
                 <div className={styles.card}>
                     <h1 className={styles.title}>Новая операция</h1>
@@ -248,8 +251,8 @@ export default function UserPage() {
                                     </div>
 
                                     <div className={styles.infoItem}>
-                                        <div className={styles.infoLabel}>Никнейм/ID</div>
-                                        <div className={styles.infoValue}>{user.username || `ID: ${user.telegramId}`}</div>
+                                        <div className={styles.infoLabel}>Никнейм</div>
+                                        <div className={styles.infoValue}>{user.username || 'скрытый'}</div>
                                     </div>
 
                                     <div className={styles.infoItem}>
@@ -429,6 +432,11 @@ export default function UserPage() {
                     </form>
                 </div>
             </main>
+            : <div/>
+            }
         </div>
     );
 }
+
+
+export default withAuth(UserPage);

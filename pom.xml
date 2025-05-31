@@ -30,7 +30,7 @@
         <dependency>
             <groupId>ru</groupId>
             <artifactId>Library</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
         <!-- FeignClient -->
         <dependency>
@@ -45,6 +45,11 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Spring Boot actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
         <!-- Spring Boot starter web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

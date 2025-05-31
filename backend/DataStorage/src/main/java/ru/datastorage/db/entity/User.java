@@ -26,8 +26,7 @@ public class User {
     @Column(name = "telegram_id", nullable = false)
     private Long telegramId;
 
-    @NotNull
-    @Column(name = "username", nullable = false)
+    @Column(name = "username")
     private String username;
 
     @Column(name = "name")

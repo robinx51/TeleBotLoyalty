@@ -4,18 +4,22 @@ server:
 serviceUrl:
   dataStorage: http://localhost:9092
   oneC: http://localhost:9094
-  frontend: http://localhost:9090
 
 
 spring:
   jackson:
     time-zone: Europe/Moscow
   profiles:
-    active: prod
+    active: dev
   cloud:
     inetutils:
       preferred-networks: 127.0.0.1
       timeout-seconds: 1
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  devtools:
+    livereload:
+      enabled: false
 
 logging:
   level:

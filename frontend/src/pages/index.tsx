@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useRouter } from 'next/router';
 import Head from "next/head";
 import styles from '../styles/index.module.css';
+import withAuth, {getAuth} from '../components/withAuth'
 
-export default function HomePage() {
+function HomePage() {
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
+    const [isAuth, setAuth] = useState<boolean>(false);
     const router = useRouter();
+
+    useEffect(() => {
+        setAuth(getAuth);
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,7 +38,7 @@ export default function HomePage() {
                 <meta name="description" content="Поиск пользователя по коду" />
                 <link rel="icon" href="/favicon.png" />
             </Head>
-
+            { isAuth ?
             <main className={styles.main}>
                 <div className={styles.card}>
                     <h1 className={styles.title}>Введите код клиента</h1>
@@ -81,6 +87,11 @@ export default function HomePage() {
                     </form>
                 </div>
             </main>
+            : <div/>
+            }
         </div>
     );
 }
+
+
+export default withAuth(HomePage);

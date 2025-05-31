@@ -7,12 +7,15 @@ public enum ButtonText {
     SUB_CASHBACK("Списать баллы"),
     AVAILABILITY("Узнать наличие"),
     CASHBACK_RULES("Правила кэшбека"),
+    ADMIN("Админ панель"),
     CHANNEL_LINK("\uD83D\uDCE2 Подписаться"),
     SUBSCRIBED("✅ Я подписан"),
     USED_BUTTON("Б/У айфоны"),
     NEW_BUTTON("Новые айфоны"),
     BACK_BUTTON("↩️ Назад"),
-    PHONE_BUTTON("\uD83D\uDCF1 iPhone ");
+    PHONE_BUTTON("\uD83D\uDCF1 iPhone "),
+    GET_BUTTON("Получить"),
+    CHANGE_BUTTON("Изменить");
 
     private final String value;
 

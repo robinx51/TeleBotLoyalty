@@ -9,6 +9,7 @@ RUN npm install
 ARG ENV_PROFILE=production
 COPY .env.${ENV_PROFILE} .env.production
 COPY . .
+ENV BACKEND_URL=http://ms-TeleBot:9093
 
 RUN npm run build
 
@@ -18,7 +19,7 @@ WORKDIR /app
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
-RUN npm install --omit=dev
+RUN npm install --omit=prod
 
 EXPOSE 9090
 CMD ["npm", "start"]

@@ -15,4 +15,9 @@ public interface DataStorageFeignClient {
     void newUser(UserDto user);
     @PostMapping("/storage/users/update")
     void updateUser(UserDto user);
+
+    @GetMapping("/storage/admin/get")
+    List<String> getAdmin();
+    @PostMapping("/storage/admin/update")
+    void updateAdmin(List<String> admin);
 }
