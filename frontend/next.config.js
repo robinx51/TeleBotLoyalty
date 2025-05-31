@@ -15,7 +15,7 @@ module.exports = {
         source: '/api/:path*',
         headers: [
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: 'https://smartstoreteam.ru' }
+          { key: 'Access-Control-Allow-Origin', value: `${process.env.DOMAIN_URL}` }
         ]
       }
     ]
@@ -29,5 +29,6 @@ module.exports = {
   },
   env: {
     BACKEND_URL: process.env.BACKEND_URL,
+    DOMAIN_URL: process.env.DOMAIN_URL
   },
 };

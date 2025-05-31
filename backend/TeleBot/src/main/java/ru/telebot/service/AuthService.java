@@ -21,8 +21,8 @@ public class AuthService {
     private final DataStorageService dataStorageService;
     private final List<UUID> tokens;
 
-    @Value("${spring.profiles.active}")
-    private String profile;
+    @Value("${bot.secure}")
+    private String secure;
 
     public ResponseEntity<?> login(LoginRequest request, HttpServletResponse response) {
         try {
@@ -31,7 +31,7 @@ public class AuthService {
                 authCookie.setHttpOnly(true);
                 authCookie.setPath("/");
                 authCookie.setMaxAge(24 * 60 * 60); // 1 день
-                authCookie.setSecure(profile.equals("prod"));
+                authCookie.setSecure(secure.equals("true"));
                 response.addCookie(authCookie);
 
                 return ResponseEntity.ok().build();

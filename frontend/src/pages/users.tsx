@@ -151,7 +151,6 @@ function UsersPage() {
                                     <th className={styles.th}>Username</th>
                                     <th className={styles.th}>Телефон</th>
                                     <th className={styles.th}>Кэшбэк</th>
-                                    {/*<th className={styles.th}>Действия</th>*/}
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -168,7 +167,7 @@ function UsersPage() {
                                                 {user.name || '-'}
                                             </td>
                                             <td className={styles.td}>
-                                                {user.username}
+                                                {user.username || 'скрытый'}
                                             </td>
                                             <td className={styles.td}>
                                                 {getFormattedPhone(user.phoneNumber) || '-'}

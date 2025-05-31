@@ -87,18 +87,21 @@ public class BotService {
             User1CRequestDto user1CRequestDto = User1CRequestDto.builder()
                     .fullName(update.getName())
                     .phone(update.getPhoneNumber())
-                    .username(user.getUsername())
+                    .username(user.getUsername() == null ? "скрыт" : user.getUsername())
                     .build();
             if (!oneCService.addUser(user1CRequestDto))
                 return false;
-
         }
         user.setName(update.getName());
         user.setPhoneNumber(update.getPhoneNumber());
         user.setCashback(calculateCashback(user.getCashback(), update));
 
-        dataStorageService.updateUser(user);
-        bot.sendMessage(getResponsePage(user));
+        try {
+            dataStorageService.updateUser(user);
+            bot.sendMessage(getResponsePage(user));
+        } catch (Exception e) {
+            return false;
+        }
         return true;
     }
 
@@ -522,7 +525,7 @@ public class BotService {
 
     // Functions
     @Async
-    @Scheduled(initialDelay = 2000, fixedDelayString = "${interval.phones}") // Раз в сутки
+    @Scheduled(initialDelay = 2000, fixedDelayString = "${interval.phones}") // Раз в 4 часа
     public void updatePhones() throws InterruptedException {
         Map<String, List<PhoneDto>> phoneMap = new HashMap<>();
         try {

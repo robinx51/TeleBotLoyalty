@@ -251,8 +251,8 @@ function UserPage() {
                                     </div>
 
                                     <div className={styles.infoItem}>
-                                        <div className={styles.infoLabel}>Никнейм/ID</div>
-                                        <div className={styles.infoValue}>{user.username || `ID: ${user.telegramId}`}</div>
+                                        <div className={styles.infoLabel}>Никнейм</div>
+                                        <div className={styles.infoValue}>{user.username || 'скрытый'}</div>
                                     </div>
 
                                     <div className={styles.infoItem}>

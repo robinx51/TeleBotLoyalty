@@ -2,7 +2,7 @@ import {deleteCookie, setCookie} from 'cookies-next';
 import {checkLogin, getAuth, postLogout} from "./api";
 
 const cookieOptions = {
-    maxAge: 60 * 60 * 24 * 7, // 7 дней
+    maxAge: 60 * 60 * 24, // 1 день
     path: '/',
     sameSite: 'strict' as const,
 };
